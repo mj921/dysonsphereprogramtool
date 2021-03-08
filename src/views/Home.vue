@@ -264,12 +264,10 @@ export default {
         }
       }
       const currPf = JSON.parse(JSON.stringify(pf[name]));
-      console.log(currPf);
       const obj = currPf[config[name] || 0];
       const q = obj.q;
       const m = obj.m;
       const sb = getSbInfo(m);
-      console.log(sb);
       const speed = sb.speed;
       const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
       // const r = num * obj.t
@@ -290,7 +288,6 @@ export default {
       };
     },
     getYl(map, cache = {}, sb = {}) {
-      console.log(map, cache, sb);
       if (cache[map["名称"]]) {
         cache[map["名称"]].num += map["数量"];
         cache[map["名称"]].sbNum += map["设备数"];
@@ -328,11 +325,6 @@ export default {
       });
       return cache;
     }
-  },
-  created() {
-    // const aa = this.getPf("宇宙矩阵")
-    // console.log(aa);
-    // console.log(this.getYl(aa));
   }
 };
 </script>
