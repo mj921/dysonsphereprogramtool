@@ -435,6 +435,14 @@ export default {
       q: [],
       t: 1,
       chanliang: 1
+    },
+    {
+      s: [{ name: "可燃冰" }],
+      group: "组件",
+      m: "矿脉",
+      q: [],
+      t: 1,
+      chanliang: 1
     }
   ],
   刺笋结晶: [
@@ -442,6 +450,14 @@ export default {
       s: [{ name: "刺笋结晶" }],
       group: "组件",
       m: "采矿机",
+      q: [],
+      t: 1,
+      chanliang: 1
+    },
+    {
+      s: [{ name: "刺笋结晶" }],
+      group: "组件",
+      m: "矿脉",
       q: [],
       t: 1,
       chanliang: 1
@@ -552,6 +568,14 @@ export default {
       s: [{ name: "有机晶体" }],
       group: "组件",
       m: "采矿机",
+      q: [],
+      t: 1,
+      chanliang: 1
+    },
+    {
+      s: [{ name: "有机晶体" }],
+      group: "组件",
+      m: "矿脉",
       q: [],
       t: 1,
       chanliang: 1
@@ -939,15 +963,21 @@ export default {
       chanliang: 1
     }
   ],
-  光栅石: [{ s: [{ name: "光栅石" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
+  光栅石: [
+    { s: [{ name: "光栅石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "光栅石" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
   单极磁石: [
-    { s: [{ name: "单极磁石" }], q: [], m: "采矿机", t: 1, chanliang: 1 }
+    { s: [{ name: "单极磁石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "单极磁石" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
   ],
   金伯利矿石: [
-    { s: [{ name: "金伯利矿石" }], q: [], m: "采矿机", t: 1, chanliang: 1 }
+    { s: [{ name: "金伯利矿石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "金伯利矿石" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
   ],
   分形硅石: [
-    { s: [{ name: "分形硅石" }], q: [], m: "采矿机", t: 1, chanliang: 1 }
+    { s: [{ name: "分形硅石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "分形硅石" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
   ],
   地基: [
     {

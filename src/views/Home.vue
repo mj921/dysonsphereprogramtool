@@ -36,18 +36,34 @@
     </el-button>
     <br />
     <tree :data="data" :vertical="vertical" />
-    <el-dialog title="总览" :visible.sync="visible" width="500px">
+    <el-dialog title="总览" :visible.sync="visible" width="700px">
       <div class="all">
         <div>
           <dl v-for="(item, i) in yl" :key="i">
+            <img :src="imgs[item.name]" alt="" />
             <span style="color: #f50a0a;">
               {{ item.name }} x {{ item.num }}
             </span>
-            ({{ item.sbName }} x {{ item.sbNum | numFmt }})
+            <img
+              :src="
+                /^矿脉/.test(item.sbName)
+                  ? imgs[item.name]
+                  : imgs[item.sbName.replace(/\([^\)]*\)/, '')]
+              "
+              alt=""
+            />{{ item.sbName }} x {{ item.sbNum | numFmt }}
           </dl>
         </div>
         <div>
           <dl v-for="(item, i) in sb" :key="i">
+            <img
+              :src="
+                /矿脉/.test(item.name)
+                  ? imgs[item.name.slice(0, item.name.indexOf('矿脉'))]
+                  : imgs[item.name.replace(/\([^\)]*\)/, '')]
+              "
+              alt=""
+            />
             {{ item.name }} x {{ item.num | numFmt }}
           </dl>
         </div>
@@ -219,16 +235,12 @@ export default {
           }
         }
         const obj = pf[this.currWp][config[this.currWp] || 0];
-        console.log(
-          ((this.num * obj.chanliang) / obj.t) * getSbInfo(obj.m).speed
-        );
         this.data = this.getPf(
           this.currWp,
           ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed
         );
       }
       const [yl, sb] = this.getYl(this.data);
-      console.log(yl);
       this.yl = Object.keys(yl).map(key => ({
         name: key,
         ...yl[key]
@@ -288,10 +300,14 @@ export default {
         cache[map["名称"]].sbName = map["设备"];
         cache[map["名称"]].sbNum = map["设备数"];
       }
-      if (sb[map["设备"]]) {
-        sb[map["设备"]] += map["设备数"];
+      let sbName = map["设备"];
+      if (/^矿脉/.test(sbName)) {
+        sbName = map["名称"] + sbName;
+      }
+      if (sb[sbName]) {
+        sb[sbName] += map["设备数"];
       } else {
-        sb[map["设备"]] = map["设备数"];
+        sb[sbName] = map["设备数"];
       }
       console.log(map, cache, sb);
       map["需求产物"].forEach(item => {
@@ -335,6 +351,12 @@ export default {
   & > * {
     flex-grow: 1;
   }
+}
+img {
+  width: 20px;
+  height: 20px;
+  vertical-align: top;
+  margin-right: 5px;
 }
 .select-img {
   width: 20px;
