@@ -23,8 +23,28 @@
       ></el-input>
       <el-checkbox v-model="vertical">是否水平</el-checkbox>
     </div>
+    <el-button @click="visible = true" style="margin-left: 10px;">
+      查看总览
+    </el-button>
     <br />
     <tree :data="data" :vertical="vertical" />
+    <el-dialog title="总览" :visible.sync="visible" width="500px">
+      <div class="all">
+        <div>
+          <dl v-for="(item, i) in yl" :key="i">
+            {{ item.name }} x {{ item.num }}
+          </dl>
+        </div>
+        <div>
+          <dl v-for="(item, i) in sb" :key="i">
+            {{ item.name }} x {{ item.num }}
+          </dl>
+        </div>
+      </div>
+      <span slot="footer">
+        <el-button @click="visible = false">关闭</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -66,7 +86,10 @@ export default {
       data: {},
       vertical: false,
       type: "产量",
-      num: 60
+      num: 60,
+      yl: [],
+      sb: [],
+      visible: false
     };
   },
   watch: {
@@ -112,8 +135,17 @@ export default {
           ((this.num * obj.chanliang * 60) / obj.t) * getSpeed(obj.m).speed
         );
       }
+      const [yl, sb] = this.getYl(this.data);
+      this.yl = Object.keys(yl).map(key => ({
+        name: key,
+        num: yl[key]
+      }));
+      this.sb = Object.keys(sb).map(key => ({
+        name: key,
+        num: sb[key]
+      }));
       console.log("配方：", this.data);
-      console.log("原料：", this.getYl(this.data));
+      console.log("原料：", yl);
       console.log("基础原料：", this.getBaseYl(this.data));
     },
     getPf(name, num = 60) {
@@ -149,16 +181,21 @@ export default {
         pf: pf[name]
       };
     },
-    getYl(map, cache = {}) {
+    getYl(map, cache = {}, sb = {}) {
       if (cache[map["名称"]]) {
         cache[map["名称"]] += map["数量"];
       } else {
         cache[map["名称"]] = map["数量"];
       }
+      if (sb[map["设备"]]) {
+        sb[map["设备"]] += map["设备数"];
+      } else {
+        sb[map["设备"]] = map["设备数"];
+      }
       map["需求产物"].forEach(item => {
-        this.getYl(item, cache);
+        this.getYl(item, cache, sb);
       });
-      return cache;
+      return [cache, sb];
     },
     getBaseYl(map, cache = {}) {
       if (map.base || !map["需求产物"] || map["需求产物"].length === 0) {
@@ -190,98 +227,12 @@ export default {
     width: 7000px;
   }
 }
-</style>
-<style lang="scss">
-.form {
-  padding: 10px;
+.all {
+  color: #f5c62a;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 800px;
-  .el-input {
-    .el-input__inner {
-      background-color: #000;
-      border-color: #f5c62a;
-      color: #f5c62a;
-      &::placeholder {
-        color: rgba($color: #f5c62a, $alpha: 0.7);
-      }
-    }
-  }
-
-  .el-select .el-input {
-    .el-select__caret {
-      color: #f5c62a;
-    }
-    &.is-focus {
-      .el-input__inner {
-        border-color: #f5c62a;
-      }
-    }
-  }
-  .el-radio {
-    color: rgba($color: #f5c62a, $alpha: 0.6);
-    .el-radio__input {
-      .el-radio__inner {
-        border-color: rgba($color: #f5c62a, $alpha: 0.6);
-        background-color: #000;
-      }
-    }
-    &.is-checked {
-      .el-radio__input {
-        &.is-checked {
-          & + .el-radio__label {
-            color: #f5c62a;
-          }
-          .el-radio__inner {
-            background-color: #f5c62a;
-            &::after {
-              background-color: #000;
-            }
-          }
-        }
-      }
-    }
-  }
-  .el-checkbox {
-    color: rgba($color: #f5c62a, $alpha: 0.6);
-    .el-checkbox__input {
-      .el-checkbox__inner {
-        background-color: #000;
-        border-color: rgba($color: #f5c62a, $alpha: 0.6);
-      }
-      &.is-checked {
-        & + .el-checkbox__label {
-          color: #f5c62a;
-        }
-        .el-checkbox__inner {
-          background-color: #f5c62a;
-          border-color: #f5c62a;
-        }
-      }
-    }
-  }
-}
-.el-select-dropdown {
-  background-color: #000 !important;
-  border-color: #f5c62a !important;
-  .el-select-dropdown__item {
-    color: #f5c62a;
-    &.is-disabled {
-      color: rgba($color: #f5c62a, $alpha: 0.6);
-      &.hover,
-      &:hover {
-        color: rgba($color: #f50a0a, $alpha: 0.6);
-      }
-    }
-    &.selected {
-      color: #f50a0a;
-    }
-    &.hover,
-    &:hover {
-      background-color: rgb(241, 234, 126) !important;
-      color: #f50a0a;
-    }
+  & > * {
+    flex-grow: 1;
   }
 }
 </style>
+<style lang="scss"></style>

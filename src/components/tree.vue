@@ -90,9 +90,19 @@ export default {
   },
   methods: {
     changePf(data, i) {
-      if ((this.config[data["名称"]] || 0) !== i) {
-        this.config[data["名称"]] = i;
-        localStorage.setItem("pfConfig", JSON.stringify(this.config));
+      const configStr = localStorage.getItem("pfConfig");
+      let config = {};
+      if (configStr) {
+        try {
+          config = JSON.parse(configStr);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      if ((config[data["名称"]] || 0) !== i) {
+        config[data["名称"]] = i;
+        this.config = config;
+        localStorage.setItem("pfConfig", JSON.stringify(config));
         this.createPf();
       }
     }

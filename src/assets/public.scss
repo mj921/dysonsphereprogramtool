@@ -1,0 +1,119 @@
+
+.form {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 800px;
+  .el-input {
+    .el-input__inner {
+      background-color: #000;
+      border-color: #f5c62a;
+      color: #f5c62a;
+      &::placeholder {
+        color: rgba($color: #f5c62a, $alpha: 0.7);
+      }
+    }
+  }
+
+  .el-select {
+    .el-input {
+      .el-select__caret {
+        color: #f5c62a;
+      }
+      &.is-focus,
+      &:hover {
+        .el-input__inner {
+          border-color: #f5c62a;
+        }
+      }
+    }
+  }
+  .el-radio {
+    color: rgba($color: #f5c62a, $alpha: 0.6);
+    .el-radio__input {
+      .el-radio__inner {
+        border-color: rgba($color: #f5c62a, $alpha: 0.6);
+        background-color: #000;
+      }
+    }
+    &.is-checked {
+      .el-radio__input {
+        &.is-checked {
+          & + .el-radio__label {
+            color: #f5c62a;
+          }
+          .el-radio__inner {
+            background-color: #f5c62a;
+            &::after {
+              background-color: #000;
+            }
+          }
+        }
+      }
+    }
+  }
+  .el-checkbox {
+    color: rgba($color: #f5c62a, $alpha: 0.6);
+    .el-checkbox__input {
+      .el-checkbox__inner {
+        background-color: #000;
+        border-color: rgba($color: #f5c62a, $alpha: 0.6);
+      }
+      &.is-checked {
+        & + .el-checkbox__label {
+          color: #f5c62a;
+        }
+        .el-checkbox__inner {
+          background-color: #f5c62a;
+          border-color: #f5c62a;
+        }
+      }
+    }
+  }
+}
+.el-select-dropdown {
+  background-color: #000 !important;
+  border-color: #f5c62a !important;
+  .popper__arrow {
+    display: none !important;
+  }
+  .el-select-dropdown__item {
+    color: #f5c62a;
+    &.is-disabled {
+      color: rgba($color: #f5c62a, $alpha: 0.6);
+      &.hover,
+      &:hover {
+        color: rgba($color: #f50a0a, $alpha: 0.6);
+      }
+    }
+    &.selected {
+      color: #f50a0a;
+    }
+    &.hover,
+    &:hover {
+      background-color: rgb(241, 234, 126) !important;
+      color: #f50a0a;
+    }
+  }
+}
+.el-button {
+  border-color: rgba($color: #f5c62a, $alpha: 0.6) !important;
+  background-color: #181616 !important;
+  color: #f5c62a !important;
+  &:hover {
+    background-color: rgba($color: #f5c62a, $alpha: 0.6) !important;
+  }
+}
+.v-modal {
+  background-color: #fff !important;
+}
+.el-dialog {
+  background-color: #000;
+  box-shadow: 0 0 5px 1px rgba($color: #f5c62a, $alpha: 0.6);
+  .el-dialog__header {
+    .el-dialog__title {
+      color: #f5c62a;
+    }
+  }
+}
