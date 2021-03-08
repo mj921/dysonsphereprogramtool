@@ -2,14 +2,19 @@
   <div class="home" :class="{ vertical }">
     <div class="form">
       <el-select v-model="currWp" filterable placeholder="请选择产物">
-        <el-option
-          v-for="item in list"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-          :disabled="!!item.disabled"
+        <el-option-group
+          v-for="group in list"
+          :key="group.name"
+          :label="group.name"
         >
-        </el-option>
+          <el-option
+            v-for="item in group.options"
+            :key="item.value"
+            :value="item.value"
+          >
+            <img class="select-img" :src="imgs[item.label]" />{{ item.label }}
+          </el-option>
+        </el-option-group>
       </el-select>
       <el-radio-group v-model="type" @change="typeChange">
         <el-radio label="产量"></el-radio>
@@ -109,18 +114,16 @@ export default {
     const imgs = {};
     for (let key in wp) {
       list.push({
-        value: key,
-        label: key,
-        disabled: true
-      });
-      wp[key].forEach(item => {
-        const arr = item.name.split("-");
-        const name = arr[arr.length - 1];
-        imgs[name] = "data:image/png;base64," + item.value;
-        list.push({
-          value: name,
-          label: name
-        });
+        name: key,
+        options: wp[key].map(item => {
+          const arr = item.name.split("-");
+          const name = arr[arr.length - 1];
+          imgs[name] = "data:image/png;base64," + item.value;
+          return {
+            value: name,
+            label: name
+          };
+        })
       });
     }
     const sbConfigStr = localStorage.getItem("sbConfig");
@@ -332,6 +335,12 @@ export default {
   & > * {
     flex-grow: 1;
   }
+}
+.select-img {
+  width: 20px;
+  height: 20px;
+  vertical-align: top;
+  margin-right: 5px;
 }
 </style>
 <style lang="scss"></style>

@@ -127,3 +127,9 @@
     }
   }
 }
+.el-select-dropdown{
+  .el-select-dropdown__item {
+    display: flex;
+    align-items: center;
+  }
+}
