@@ -11,7 +11,7 @@ export default {
         { name: "反物质", n: 1 }
       ],
       t: 15,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 1
     }
@@ -50,7 +50,7 @@ export default {
         { name: "电路板", n: 1 }
       ],
       t: 3,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 1
     }
@@ -63,7 +63,7 @@ export default {
         { name: "氢", n: 2 }
       ],
       t: 6,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 1
     }
@@ -76,7 +76,7 @@ export default {
         { name: "钛晶石", n: 1 }
       ],
       t: 8,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 1
     }
@@ -89,7 +89,7 @@ export default {
         { name: "粒子带宽", n: 1 }
       ],
       t: 10,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 1
     }
@@ -102,7 +102,7 @@ export default {
         { name: "引力透镜", n: 1 }
       ],
       t: 24,
-      m: "研究站",
+      m: "矩阵研究站",
       group: "产品",
       chanliang: 2
     }
@@ -1409,9 +1409,9 @@ export default {
       chanliang: 1
     }
   ],
-  矩阵研究站: [
+  矩阵矩阵研究站: [
     {
-      s: [{ name: "矩阵研究站", n: 1 }],
+      s: [{ name: "矩阵矩阵研究站", n: 1 }],
       group: "建筑",
       m: "制作台",
       q: [

@@ -1,7 +1,7 @@
 <template>
   <div class="home" :class="{ vertical }">
     <div class="form">
-      <el-select v-model="currWp" filterable>
+      <el-select v-model="currWp" filterable placeholder="请选择产物">
         <el-option
           v-for="item in list"
           :key="item.value"
@@ -32,7 +32,10 @@
       <div class="all">
         <div>
           <dl v-for="(item, i) in yl" :key="i">
-            {{ item.name }} x {{ item.num }}
+            <span style="color: #f50a0a;">
+              {{ item.name }} x {{ item.num }}
+            </span>
+            ({{ item.sbName }} x {{ item.sbNum }})
           </dl>
         </div>
         <div>
@@ -136,9 +139,10 @@ export default {
         );
       }
       const [yl, sb] = this.getYl(this.data);
+      console.log(yl);
       this.yl = Object.keys(yl).map(key => ({
         name: key,
-        num: yl[key]
+        ...yl[key]
       }));
       this.sb = Object.keys(sb).map(key => ({
         name: key,
@@ -182,16 +186,22 @@ export default {
       };
     },
     getYl(map, cache = {}, sb = {}) {
+      console.log(map, cache, sb);
       if (cache[map["名称"]]) {
-        cache[map["名称"]] += map["数量"];
+        cache[map["名称"]].num += map["数量"];
+        cache[map["名称"]].sbNum += map["设备数"];
       } else {
-        cache[map["名称"]] = map["数量"];
+        cache[map["名称"]] = {};
+        cache[map["名称"]].num = map["数量"];
+        cache[map["名称"]].sbName = map["设备"];
+        cache[map["名称"]].sbNum = map["设备数"];
       }
       if (sb[map["设备"]]) {
         sb[map["设备"]] += map["设备数"];
       } else {
         sb[map["设备"]] = map["设备数"];
       }
+      console.log(map, cache, sb);
       map["需求产物"].forEach(item => {
         this.getYl(item, cache, sb);
       });
