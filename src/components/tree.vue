@@ -14,7 +14,9 @@
             {{ data["数量"] | numFmt }}
           </div>
           <div>
-            <img :src="data['设备'] === '矿脉' ? data.img : data.sbImg" />
+            <img
+              :src="data['设备'].slice(0, 2) === '矿脉' ? data.img : data.sbImg"
+            />
             {{ data["设备"] }} x {{ data["设备数"] | numFmt }}
           </div>
         </div>
@@ -26,19 +28,41 @@
             :key="i"
             @click.stop="changePf(data, i)"
           >
-            <div v-for="(jtem, j) in item.q" :key="'q' + j">
-              <img :src="imgs[jtem.name]" /><span>{{ jtem.n }}</span>
-            </div>
-            <div
-              class="time"
-              v-if="item.q && item.q.length > 0 && item.s && item.s.length > 0"
-            >
-              <div class="time-num">{{ item.t }} s</div>
-              <div>→</div>
-            </div>
-            <div v-for="(jtem, j) in item.s" :key="'s' + j">
-              <img :src="imgs[jtem.name]" /><span>{{ jtem.n || 1 }}</span>
-            </div>
+            <template v-if="item.m === '采矿机'">
+              <img :src="imgs['采矿机']" />
+              <div class="not-time" v-if="item.s && item.s.length > 0">
+                <div>→</div>
+              </div>
+              <div v-for="(jtem, j) in item.s" :key="'s' + j">
+                <img :src="imgs[jtem.name]" />
+              </div>
+            </template>
+            <template v-else-if="item.m === '矿脉'">
+              <img :src="imgs[data['名称']]" />
+              <div class="not-time" v-if="item.s && item.s.length > 0">
+                <div>→</div>
+              </div>
+              <div v-for="(jtem, j) in item.s" :key="'s' + j">
+                <img :src="imgs[jtem.name]" />
+              </div>
+            </template>
+            <template v-else>
+              <div v-for="(jtem, j) in item.q" :key="'q' + j">
+                <img :src="imgs[jtem.name]" /><span>{{ jtem.n }}</span>
+              </div>
+              <div
+                class="time"
+                v-if="
+                  item.q && item.q.length > 0 && item.s && item.s.length > 0
+                "
+              >
+                <div class="time-num">{{ item.t }} s</div>
+                <div>→</div>
+              </div>
+              <div v-for="(jtem, j) in item.s" :key="'s' + j">
+                <img :src="imgs[jtem.name]" /><span>{{ jtem.n || 1 }}</span>
+              </div>
+            </template>
           </dl>
         </div>
       </el-popover>
@@ -70,7 +94,10 @@ export default {
   inject: ["createPf"],
   filters: {
     numFmt(val) {
-      return val.toFixed(2).replace(/\.00$/, "");
+      return val
+        .toFixed(2)
+        .replace(/\.00$/, "")
+        .replace(/(\.\d)0$/, "$1");
     }
   },
   data() {
@@ -258,6 +285,9 @@ export default {
       .time-num {
         font-size: 12px;
         line-height: 12px;
+      }
+      &.not-time {
+        line-height: 40px;
       }
     }
     span {

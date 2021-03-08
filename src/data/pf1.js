@@ -16,15 +16,31 @@ export default {
       chanliang: 1
     }
   ],
-  铁矿: [{ s: [{ name: "铁矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
-  铜矿: [{ s: [{ name: "铜矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
-  煤矿: [{ s: [{ name: "煤矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
-  石矿: [{ s: [{ name: "石矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
-  钛石: [{ s: [{ name: "钛石" }], q: [], m: "采矿机", t: 1, chanliang: 1 }],
+  铁矿: [
+    { s: [{ name: "铁矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "铁矿" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
+  铜矿: [
+    { s: [{ name: "铜矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "铜矿" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
+  煤矿: [
+    { s: [{ name: "煤矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "煤矿" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
+  石矿: [
+    { s: [{ name: "石矿" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "石矿" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
+  钛石: [
+    { s: [{ name: "钛石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "钛石" }], q: [], m: "矿脉", t: 1, chanliang: 1 }
+  ],
   原油: [{ s: [{ name: "原油" }], q: [], m: "原油萃取站", t: 1, chanliang: 1 }],
   水: [{ s: [{ name: "水" }], q: [], m: "抽水机", t: 1, chanliang: 1 }],
   硅石: [
     { s: [{ name: "硅石" }], q: [], m: "采矿机", t: 1, chanliang: 1 },
+    { s: [{ name: "硅石" }], q: [], m: "矿脉", t: 1, chanliang: 1 },
     {
       s: [{ name: "硅石" }],
       q: [{ name: "石矿", n: 10 }],
@@ -36,7 +52,7 @@ export default {
   蓄电池满: [
     {
       s: [{ name: "蓄电池满" }],
-      q: [{ name: "蓄电池" }],
+      q: [{ name: "蓄电池", n: 1 }],
       m: "能量枢纽",
       t: 1,
       chanliang: 1

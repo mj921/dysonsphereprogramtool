@@ -5,69 +5,79 @@
   align-items: center;
   justify-content: space-between;
   width: 800px;
-  .el-input {
-    .el-input__inner {
-      background-color: #000;
-      border-color: #f5c62a;
+}
+.el-form {
+  .el-form-item {
+    .el-form-item__label {
       color: #f5c62a;
-      &::placeholder {
-        color: rgba($color: #f5c62a, $alpha: 0.7);
-      }
     }
-  }
-
-  .el-select {
     .el-input {
-      .el-select__caret {
-        color: #f5c62a;
-      }
-      &.is-focus,
-      &:hover {
-        .el-input__inner {
-          border-color: #f5c62a;
-        }
+      width: 200px;
+    }
+  }
+}
+.el-input {
+  .el-input__inner {
+    background-color: #000;
+    border-color: #f5c62a;
+    color: #f5c62a;
+    &::placeholder {
+      color: rgba($color: #f5c62a, $alpha: 0.7);
+    }
+  }
+}
+
+.el-select {
+  .el-input {
+    .el-select__caret {
+      color: #f5c62a;
+    }
+    &.is-focus,
+    &:hover {
+      .el-input__inner {
+        border-color: #f5c62a;
       }
     }
   }
-  .el-radio {
-    color: rgba($color: #f5c62a, $alpha: 0.6);
+}
+.el-radio {
+  color: rgba($color: #f5c62a, $alpha: 0.6);
+  .el-radio__input {
+    .el-radio__inner {
+      border-color: rgba($color: #f5c62a, $alpha: 0.6);
+      background-color: #000;
+    }
+  }
+  &.is-checked {
     .el-radio__input {
-      .el-radio__inner {
-        border-color: rgba($color: #f5c62a, $alpha: 0.6);
-        background-color: #000;
-      }
-    }
-    &.is-checked {
-      .el-radio__input {
-        &.is-checked {
-          & + .el-radio__label {
-            color: #f5c62a;
-          }
-          .el-radio__inner {
-            background-color: #f5c62a;
-            &::after {
-              background-color: #000;
-            }
-          }
-        }
-      }
-    }
-  }
-  .el-checkbox {
-    color: rgba($color: #f5c62a, $alpha: 0.6);
-    .el-checkbox__input {
-      .el-checkbox__inner {
-        background-color: #000;
-        border-color: rgba($color: #f5c62a, $alpha: 0.6);
-      }
       &.is-checked {
-        & + .el-checkbox__label {
+        & + .el-radio__label {
           color: #f5c62a;
         }
-        .el-checkbox__inner {
+        .el-radio__inner {
           background-color: #f5c62a;
-          border-color: #f5c62a;
+          &::after {
+            background-color: #000;
+          }
         }
+      }
+    }
+  }
+}
+.el-checkbox {
+  color: rgba($color: #f5c62a, $alpha: 0.6);
+  .el-checkbox__input {
+    .el-checkbox__inner {
+      background-color: #000;
+      border-color: rgba($color: #f5c62a, $alpha: 0.6);
+    }
+    &.is-checked {
+      & + .el-checkbox__label {
+        color: #f5c62a;
+      }
+      .el-checkbox__inner {
+        background-color: #f5c62a;
+        border-color: #f5c62a;
       }
     }
   }

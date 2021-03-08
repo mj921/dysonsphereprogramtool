@@ -26,6 +26,9 @@
     <el-button @click="visible = true" style="margin-left: 10px;">
       查看总览
     </el-button>
+    <el-button @click="configVisible = true" style="margin-left: 10px;">
+      参数配置
+    </el-button>
     <br />
     <tree :data="data" :vertical="vertical" />
     <el-dialog title="总览" :visible.sync="visible" width="500px">
@@ -35,12 +38,12 @@
             <span style="color: #f50a0a;">
               {{ item.name }} x {{ item.num }}
             </span>
-            ({{ item.sbName }} x {{ item.sbNum }})
+            ({{ item.sbName }} x {{ item.sbNum | numFmt }})
           </dl>
         </div>
         <div>
           <dl v-for="(item, i) in sb" :key="i">
-            {{ item.name }} x {{ item.num }}
+            {{ item.name }} x {{ item.num | numFmt }}
           </dl>
         </div>
       </div>
@@ -48,12 +51,51 @@
         <el-button @click="visible = false">关闭</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="参数配置" :visible.sync="configVisible" width="700px">
+      <el-form label-width="100px" inline size="mini">
+        <el-form-item label="制作台">
+          <el-select
+            v-model="sbConfig['制作台']"
+            filterable
+            placeholder="请选择制作台"
+          >
+            <el-option
+              v-for="(item, i) in sbMap['制作台']"
+              :key="i"
+              :label="item.name"
+              :value="i"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          v-for="item in [
+            '原油萃取站',
+            '轨道采集器',
+            '抽水机',
+            '采矿机',
+            '矿脉'
+          ]"
+          :key="item"
+          :label="item"
+        >
+          <el-input
+            v-model="sbConfig[item]"
+            @input="iptHandle(item)"
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="save">保存</el-button>
+        <el-button @click="cancel">关闭</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import pf from "../data/pf1";
-import getSpeed from "../data/sb";
+import { getSbInfo, defSb, sbMap } from "../data/sb";
 import wp from "../data/data";
 import Tree from "../components/tree";
 
@@ -81,6 +123,15 @@ export default {
         });
       });
     }
+    const sbConfigStr = localStorage.getItem("sbConfig");
+    let sbConfig = defSb;
+    if (sbConfigStr) {
+      try {
+        sbConfig = JSON.parse(sbConfigStr);
+      } catch (e) {
+        console.log(e);
+      }
+    }
     return {
       list,
       wp,
@@ -92,7 +143,10 @@ export default {
       num: 60,
       yl: [],
       sb: [],
-      visible: false
+      visible: false,
+      configVisible: false,
+      sbConfig,
+      sbMap
     };
   },
   watch: {
@@ -102,12 +156,44 @@ export default {
       }
     }
   },
+  filters: {
+    numFmt(val) {
+      return val
+        .toFixed(2)
+        .replace(/\.00$/, "")
+        .replace(/(\.\d)0$/, "$1");
+    }
+  },
   provide() {
     return {
       createPf: this.createPf
     };
   },
   methods: {
+    iptHandle(type) {
+      this.sbConfig[type] = this.sbConfig[type]
+        .replace(/[^.0-9]/g, "")
+        .replace(/^(\d*\.\d*)[^0-9]/, "$1")
+        .replace(/^\.+/, "");
+    },
+    cancel() {
+      const sbConfigStr = localStorage.getItem("sbConfig");
+      let sbConfig = defSb;
+      if (sbConfigStr) {
+        try {
+          sbConfig = JSON.parse(sbConfigStr);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      this.sbConfig = sbConfig;
+      this.configVisible = false;
+    },
+    save() {
+      localStorage.setItem("sbConfig", JSON.stringify(this.sbConfig));
+      this.configVisible = false;
+      this.createPf();
+    },
     inputBlur() {
       this.createPf();
     },
@@ -131,11 +217,11 @@ export default {
         }
         const obj = pf[this.currWp][config[this.currWp] || 0];
         console.log(
-          ((this.num * obj.chanliang) / obj.t) * getSpeed(obj.m).speed
+          ((this.num * obj.chanliang) / obj.t) * getSbInfo(obj.m).speed
         );
         this.data = this.getPf(
           this.currWp,
-          ((this.num * obj.chanliang * 60) / obj.t) * getSpeed(obj.m).speed
+          ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed
         );
       }
       const [yl, sb] = this.getYl(this.data);
@@ -162,10 +248,13 @@ export default {
           console.log(e);
         }
       }
-      const obj = pf[name][config[name] || 0];
+      const currPf = JSON.parse(JSON.stringify(pf[name]));
+      console.log(currPf);
+      const obj = currPf[config[name] || 0];
       const q = obj.q;
       const m = obj.m;
-      const sb = getSpeed(m);
+      const sb = getSbInfo(m);
+      console.log(sb);
       const speed = sb.speed;
       const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
       // const r = num * obj.t
@@ -182,7 +271,7 @@ export default {
         base: obj.base,
         img: this.imgs[name],
         sbImg: this.imgs[sb.baseName || sb.name],
-        pf: pf[name]
+        pf: currPf
       };
     },
     getYl(map, cache = {}, sb = {}) {

@@ -1,18 +1,19 @@
-const defSb = {
+export const defSb = {
   矩阵研究站: 0,
   制作台: 1,
   冶炼设备: 0,
-  采矿机: 1,
+  采矿机: 3,
   能量枢纽: 0,
   轨道采集器: 1,
   化工厂: 0,
   原油精炼厂: 0,
-  原油萃取站: 0,
-  抽水机: 0,
+  原油萃取站: 2,
+  抽水机: 1,
   微型粒子对撞机: 0,
-  射线接收站: 0
+  射线接收站: 0,
+  矿脉: 0.5
 };
-const sbMap = {
+export const sbMap = {
   射线接收站: [
     {
       name: "射线接收站",
@@ -25,20 +26,16 @@ const sbMap = {
       speed: 1
     }
   ],
-  抽水机: [
-    {
-      name: "抽水机(1/s)",
-      baseName: "抽水机",
-      speed: 1
-    }
-  ],
-  原油萃取站: [
-    {
-      name: "原油萃取站(2/s)",
-      baseName: "原油萃取站",
-      speed: 2
-    }
-  ],
+  抽水机: {
+    name: "抽水机",
+    baseName: "抽水机",
+    speed: 1
+  },
+  原油萃取站: {
+    name: "原油萃取站",
+    baseName: "原油萃取站",
+    speed: 2
+  },
   化工厂: [
     {
       name: "化工厂",
@@ -77,36 +74,47 @@ const sbMap = {
       speed: 1
     }
   ],
-  采矿机: [
-    {
-      name: "采矿机",
-      speed: 0.5 * 6
-    },
-    {
-      name: "矿脉",
-      speed: 0.5 * 1
-    }
-  ],
+  采矿机: {
+    name: "采矿机",
+    baseName: "采矿机",
+    speed: 3
+  },
+  矿脉: {
+    name: "矿脉",
+    baseName: "矿脉",
+    speed: 0.5
+  },
   能量枢纽: [
     {
       name: "能量枢纽",
-      speed: 1
-    }
-  ],
-  轨道采集器: [
-    {
-      name: "轨道采集器(1/s)",
-      baseName: "轨道采集器",
-      speed: 1
-    },
-    {
-      name: "轨道采集器(0.5/s)",
-      baseName: "轨道采集器",
       speed: 0.5
     }
-  ]
+  ],
+  轨道采集器: {
+    name: "轨道采集器",
+    baseName: "轨道采集器",
+    speed: 1
+  }
 };
 
-export default name => {
-  return sbMap[name][defSb[name]];
+export const getSbInfo = name => {
+  const sbConfigStr = localStorage.getItem("sbConfig");
+  let sbConfig = defSb;
+  if (sbConfigStr) {
+    try {
+      sbConfig = { ...defSb, ...JSON.parse(sbConfigStr) };
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  const obj = sbMap[name];
+  if (obj instanceof Array) {
+    return obj[+sbConfig[name]];
+  } else {
+    return {
+      ...obj,
+      name: `${obj.name}(${sbConfig[name]}/s)`,
+      speed: +sbConfig[name]
+    };
+  }
 };
