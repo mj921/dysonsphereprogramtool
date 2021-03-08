@@ -1,24 +1,4 @@
-# dysonsphereprogramtool
+# 戴森球计划量化工具 dysonsphereprogramtool
+[预览地址 github](https://mj921.github.io/dysonsphereprogramtool/dist/#/)
 
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+[预览地址 gitee](https://mj921.gitee.io/dysonsphereprogramtool/#/)
