@@ -19,6 +19,7 @@
       <el-radio-group v-model="type" @change="typeChange">
         <el-radio label="产量"></el-radio>
         <el-radio label="设备"></el-radio>
+        <el-radio label="传送带"></el-radio>
       </el-radio-group>
       <el-input
         style="width: 120px;"
@@ -34,6 +35,10 @@
     <el-button @click="configVisible = true" style="margin-left: 10px;">
       参数配置
     </el-button>
+    <el-button @click="clearCache" style="margin-left: 10px;">
+      重置默认值
+    </el-button>
+    (tip:传送带按产物计算)
     <br />
     <tree :data="data" :vertical="vertical" />
     <el-dialog title="总览" :visible.sync="visible" width="700px">
@@ -86,6 +91,7 @@
               :label="item.name"
               :value="i"
             >
+              <img class="select-img" :src="imgs[item.name]" />{{ item.name }}
             </el-option>
           </el-select>
         </el-form-item>
@@ -100,10 +106,37 @@
           :key="item"
           :label="item"
         >
+          <el-input v-model="sbConfig[item]" @input="iptHandle(item)">
+            <template slot="append">/ s</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="传送带">
+          <el-select
+            v-model="sbConfig['传送带']"
+            filterable
+            placeholder="请选择传送带"
+          >
+            <el-option
+              v-for="(item, i) in sbMap['传送带']"
+              :key="i"
+              :label="item.name"
+              :value="i"
+            >
+              <img
+                v-if="imgs[item.name]"
+                class="select-img"
+                :src="imgs[item.name]"
+              />{{ item.name }}
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="传送带运力" v-if="sbConfig['传送带'] === 3">
           <el-input
-            v-model="sbConfig[item]"
-            @input="iptHandle(item)"
-          ></el-input>
+            v-model="sbConfig['自定义传送带']"
+            @input="iptHandle('自定义传送带')"
+          >
+            <template slot="append">/ s</template>
+          </el-input>
         </el-form-item>
       </el-form>
       <span slot="footer">
@@ -146,7 +179,7 @@ export default {
     let sbConfig = defSb;
     if (sbConfigStr) {
       try {
-        sbConfig = JSON.parse(sbConfigStr);
+        sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
       } catch (e) {
         console.log(e);
       }
@@ -200,7 +233,7 @@ export default {
       let sbConfig = defSb;
       if (sbConfigStr) {
         try {
-          sbConfig = JSON.parse(sbConfigStr);
+          sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
         } catch (e) {
           console.log(e);
         }
@@ -222,24 +255,39 @@ export default {
     createPf() {
       this.num = +(this.num + "").replace(/[^0-9]/g, "");
       if (!this.currWp) return;
-      if (this.type === "产量") {
-        this.data = this.getPf(this.currWp, this.num);
-      } else {
-        const configStr = localStorage.getItem("pfConfig");
-        let config = {};
-        if (configStr) {
-          try {
-            config = JSON.parse(configStr);
-          } catch (e) {
-            console.log(e);
-          }
+      const configStr = localStorage.getItem("pfConfig");
+      let config = {};
+      if (configStr) {
+        try {
+          config = JSON.parse(configStr);
+        } catch (e) {
+          console.log(e);
         }
-        const obj = pf[this.currWp][config[this.currWp] || 0];
-        this.data = this.getPf(
-          this.currWp,
-          ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed
-        );
       }
+      const obj = pf[this.currWp][config[this.currWp] || 0];
+      let num, csd;
+      switch (this.type) {
+        case "产量":
+          num = this.num;
+          break;
+        case "设备":
+          num =
+            ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed;
+          break;
+        case "传送带":
+          csd = getSbInfo("传送带");
+          if (this.sbConfig["传送带"] === 3) {
+            csd = {
+              name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
+              speed: this.sbConfig["自定义传送带"]
+            };
+          }
+          num = this.num * 60 * csd.speed;
+          break;
+        default:
+          num = this.num;
+      }
+      this.data = this.getPf(this.currWp, num);
       const [yl, sb] = this.getYl(this.data);
       this.yl = Object.keys(yl).map(key => ({
         name: key,
@@ -253,7 +301,7 @@ export default {
       console.log("原料：", yl);
       console.log("基础原料：", this.getBaseYl(this.data));
     },
-    getPf(name, num = 60) {
+    getPf(name, num = 60, parentName = "root") {
       const configStr = localStorage.getItem("pfConfig");
       let config = {};
       if (configStr) {
@@ -263,13 +311,28 @@ export default {
           console.log(e);
         }
       }
+      const parentConfig = config[parentName];
       const currPf = JSON.parse(JSON.stringify(pf[name]));
-      const obj = currPf[config[name] || 0];
+      const obj =
+        currPf[
+          (parentConfig &&
+            typeof parentConfig === "object" &&
+            parentConfig[name]) ||
+            0
+        ];
       const q = obj.q;
       const m = obj.m;
       const sb = getSbInfo(m);
       const speed = sb.speed;
       const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
+      let csd = getSbInfo("传送带");
+      if (this.sbConfig["传送带"] === 3) {
+        csd = {
+          name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
+          speed: this.sbConfig["自定义传送带"]
+        };
+      }
+      const csdNum = num / 60 / csd.speed;
       // const r = num * obj.t
       return {
         名称: name,
@@ -279,12 +342,20 @@ export default {
         需求产物: q
           .filter(item => item.name !== name)
           .map(item => {
-            return this.getPf(item.name, (item.n * num) / (obj.chanliang || 1));
+            return this.getPf(
+              item.name,
+              (item.n * num) / (obj.chanliang || 1),
+              name
+            );
           }),
         base: obj.base,
         img: this.imgs[name],
         sbImg: this.imgs[sb.baseName || sb.name],
-        pf: currPf
+        pf: currPf,
+        csdNum,
+        csdName: csd.name,
+        csdImg: this.imgs[csd.name],
+        parentName
       };
     },
     getYl(map, cache = {}, sb = {}) {
@@ -324,6 +395,10 @@ export default {
         this.getBaseYl(item, cache);
       });
       return cache;
+    },
+    clearCache() {
+      localStorage.removeItem("pfConfig");
+      localStorage.removeItem("sbConfig");
     }
   }
 };
@@ -333,6 +408,7 @@ export default {
   background-color: #000;
   min-height: 100vh;
   width: 1800px;
+  color: #f5c62a;
   &.vertical {
     width: 7000px;
   }

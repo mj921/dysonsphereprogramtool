@@ -19,17 +19,38 @@
             />
             {{ data["设备"] }} x {{ data["设备数"] | numFmt }}
           </div>
+          <div>
+            <img v-if="data.csdImg" :src="data.csdImg" />{{ data.csdName }} x
+            {{ data.csdNum | numFmt }}
+          </div>
         </div>
         <div>
           <dl
             class="tree-pf"
-            :class="{ curr: (config[data['名称']] || 0) === i }"
+            :class="{
+              curr:
+                ((data.parentName &&
+                  config[data.parentName] &&
+                  typeof config[data.parentName] === 'object' &&
+                  config[data.parentName][data['名称']]) ||
+                  0) === i
+            }"
             v-for="(item, i) in data.pf"
             :key="i"
             @click.stop="changePf(data, i)"
           >
-            <template v-if="item.m === '采矿机'">
-              <img :src="imgs['采矿机']" />
+            <template
+              v-if="
+                [
+                  '采矿机',
+                  '轨道采集器',
+                  '原油萃取站',
+                  '抽水机',
+                  '射线接收站'
+                ].indexOf(item.m) > -1
+              "
+            >
+              <img :src="imgs[item.m]" />
               <div class="not-time" v-if="item.s && item.s.length > 0">
                 <div>→</div>
               </div>
@@ -126,8 +147,22 @@ export default {
           console.log(e);
         }
       }
-      if ((config[data["名称"]] || 0) !== i) {
-        config[data["名称"]] = i;
+      if (
+        ((config[data.parentName] &&
+          typeof config[data.parentName] === "object" &&
+          config[data.parentName][data["名称"]]) ||
+          0) !== i
+      ) {
+        if (
+          config[data.parentName] &&
+          typeof config[data.parentName] === "object"
+        ) {
+          config[data.parentName][data["名称"]] = i;
+        } else {
+          config[data.parentName] = {
+            [data["名称"]]: i
+          };
+        }
         this.config = config;
         localStorage.setItem("pfConfig", JSON.stringify(config));
         this.createPf();

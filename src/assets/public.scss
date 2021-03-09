@@ -25,6 +25,13 @@
       color: rgba($color: #f5c62a, $alpha: 0.7);
     }
   }
+  .el-input-group__append {
+    background-color: #f5c62a;
+    border-color: #f5c62a;
+    color: #000;
+    font-weight: bold;
+    padding: 0 10px;
+  }
 }
 
 .el-select {
@@ -35,9 +42,12 @@
     &.is-focus,
     &:hover {
       .el-input__inner {
-        border-color: #f5c62a;
+          border-color: #f5c62a;
       }
     }
+    .el-input__inner:focus {
+      border-color: #f5c62a;
+  }
   }
 }
 .el-radio {

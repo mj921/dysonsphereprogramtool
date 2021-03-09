@@ -11,7 +11,10 @@ export const defSb = {
   抽水机: 1,
   微型粒子对撞机: 0,
   射线接收站: 0,
-  矿脉: 0.5
+  矿脉: 0.5,
+  分馏塔: 0,
+  传送带: 0,
+  自定义传送带: 30
 };
 export const sbMap = {
   射线接收站: [
@@ -94,7 +97,31 @@ export const sbMap = {
     name: "轨道采集器",
     baseName: "轨道采集器",
     speed: 1
-  }
+  },
+  分馏塔: [
+    {
+      name: "分馏塔",
+      speed: 1
+    }
+  ],
+  传送带: [
+    {
+      name: "传送带",
+      speed: 6
+    },
+    {
+      name: "高速传送带",
+      speed: 12
+    },
+    {
+      name: "极速传送带",
+      speed: 30
+    },
+    {
+      name: "自定义",
+      speed: 30
+    }
+  ]
 };
 
 export const getSbInfo = name => {
@@ -108,6 +135,7 @@ export const getSbInfo = name => {
     }
   }
   const obj = sbMap[name];
+  console.log(obj, name, sbMap);
   if (obj instanceof Array) {
     return obj[+sbConfig[name]];
   } else {

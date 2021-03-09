@@ -322,14 +322,6 @@ export default {
       chanliang: 1
     },
     {
-      s: [{ name: "氢" }],
-      group: "组件",
-      m: "轨道采集器",
-      q: [],
-      t: 1,
-      chanliang: 1
-    },
-    {
       s: [{ name: "氢" }, { name: "精炼油", n: 2 }],
       group: "组件",
       m: "原油精炼厂",
