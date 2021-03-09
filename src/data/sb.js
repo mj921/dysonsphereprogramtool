@@ -135,7 +135,6 @@ export const getSbInfo = name => {
     }
   }
   const obj = sbMap[name];
-  console.log(obj, name, sbMap);
   if (obj instanceof Array) {
     return obj[+sbConfig[name]];
   } else {

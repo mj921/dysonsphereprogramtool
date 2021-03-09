@@ -297,9 +297,6 @@ export default {
         name: key,
         num: sb[key]
       }));
-      console.log("配方：", this.data);
-      console.log("原料：", yl);
-      console.log("基础原料：", this.getBaseYl(this.data));
     },
     getPf(name, num = 60, parentName = "root") {
       const configStr = localStorage.getItem("pfConfig");
@@ -377,7 +374,6 @@ export default {
       } else {
         sb[sbName] = map["设备数"];
       }
-      console.log(map, cache, sb);
       map["需求产物"].forEach(item => {
         this.getYl(item, cache, sb);
       });

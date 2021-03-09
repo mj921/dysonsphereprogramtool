@@ -374,7 +374,7 @@ export default {
       m: "分馏塔",
       q: [{ name: "氢", n: 1 }],
       t: 1,
-      chanliang: 0.01
+      chanliang: 0.99
     }
   ],
   精炼油: [
@@ -384,7 +384,7 @@ export default {
       m: "原油精炼厂",
       q: [{ name: "原油", n: 2 }],
       t: 4,
-      chanliang: 1
+      chanliang: 2
     }
   ],
   石墨烯: [
@@ -397,7 +397,7 @@ export default {
       m: "化工厂",
       q: [{ name: "可燃冰", n: 2 }],
       t: 2,
-      chanliang: 1
+      chanliang: 2
     },
     {
       s: [{ name: "石墨烯", n: 2 }],
