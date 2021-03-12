@@ -124,6 +124,7 @@
     <br />
     <tree :data="data" :vertical="vertical" />
     <el-dialog title="总览" :visible.sync="visible" width="700px">
+      <div>总耗电大约：{{ totalPower | numFmt }} M</div>
       <div class="all">
         <div>
           <dl v-for="(item, i) in yl" :key="i">
@@ -286,7 +287,8 @@ export default {
       sbConfig,
       sbMap,
       selectTab: "组件",
-      imgSelectVisible: false
+      imgSelectVisible: false,
+      totalPower: 0
     };
   },
   watch: {
@@ -445,10 +447,12 @@ export default {
         csdNum,
         csdName: csd.name,
         csdImg: this.imgs[csd.name],
-        parentName
+        parentName,
+        power: sb.power * sbNum
       };
     },
-    getYl(map, cache = {}, sb = {}) {
+    getYl(map, cache = {}, sb = {}, totalPower = { num: 0 }) {
+      const first = totalPower.num === 0;
       if (cache[map["名称"]]) {
         cache[map["名称"]].num += map["数量"];
         cache[map["名称"]].sbNum += map["设备数"];
@@ -467,9 +471,14 @@ export default {
       } else {
         sb[sbName] = map["设备数"];
       }
+      totalPower.num += map.power;
       map["需求产物"].forEach(item => {
-        this.getYl(item, cache, sb);
+        this.getYl(item, cache, sb, totalPower);
       });
+
+      if (first) {
+        this.totalPower = totalPower.num;
+      }
       return [cache, sb];
     },
     getBaseYl(map, cache = {}) {

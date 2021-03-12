@@ -1,7 +1,12 @@
 <template>
   <div class="tree" v-if="data['名称']" :class="{ vertical }">
     <div class="tree-wrapper">
-      <el-popover placement="right" trigger="click" popper-class="tree-popper">
+      <el-popover
+        v-model="visible"
+        placement="right"
+        trigger="click"
+        popper-class="tree-popper"
+      >
         <div
           slot="reference"
           class="tree-block"
@@ -133,7 +138,8 @@ export default {
     }
     return {
       imgs,
-      config
+      config,
+      visible: false
     };
   },
   methods: {
@@ -167,6 +173,7 @@ export default {
         localStorage.setItem("pfConfig", JSON.stringify(config));
         this.createPf();
       }
+      this.visible = false;
     }
   }
 };

@@ -16,92 +16,109 @@ export const defSb = {
   传送带: 0,
   自定义传送带: 30
 };
+
 export const sbMap = {
   射线接收站: [
     {
       name: "射线接收站",
-      speed: 1
+      speed: 1,
+      power: 5
     }
   ],
   微型粒子对撞机: [
     {
       name: "微型粒子对撞机",
-      speed: 1
+      speed: 1,
+      power: 12
     }
   ],
   抽水机: {
     name: "抽水机",
     baseName: "抽水机",
-    speed: 1
+    speed: 1,
+    power: 0.3
   },
   原油萃取站: {
     name: "原油萃取站",
     baseName: "原油萃取站",
-    speed: 2
+    speed: 2,
+    power: 0.84
   },
   化工厂: [
     {
       name: "化工厂",
-      speed: 1
+      speed: 1,
+      power: 0.72
     }
   ],
   原油精炼厂: [
     {
       name: "原油精炼厂",
-      speed: 1
+      speed: 1,
+      power: 0.96
     }
   ],
   矩阵研究站: [
     {
       name: "矩阵研究站",
-      speed: 1
+      speed: 1,
+      power: 0.48
     }
   ],
   制作台: [
     {
       name: "制作台Mk.Ⅰ",
-      speed: 0.75
+      speed: 0.75,
+      power: 0.27
     },
     {
       name: "制作台Mk.Ⅱ",
-      speed: 1
+      speed: 1,
+      power: 0.48
     },
     {
       name: "制作台Mk.Ⅲ",
-      speed: 1.5
+      speed: 1.5,
+      power: 0.78
     }
   ],
   冶炼设备: [
     {
       name: "电弧熔炉",
-      speed: 1
+      speed: 1,
+      power: 0.36
     }
   ],
   采矿机: {
     name: "采矿机",
     baseName: "采矿机",
-    speed: 3
+    speed: 3,
+    power: 0.42
   },
   矿脉: {
     name: "矿脉",
     baseName: "矿脉",
-    speed: 0.5
+    speed: 0.5,
+    power: 0.07
   },
   能量枢纽: [
     {
       name: "能量枢纽",
-      speed: 0.5
+      speed: 0.5,
+      power: 0
     }
   ],
   轨道采集器: {
     name: "轨道采集器",
     baseName: "轨道采集器",
-    speed: 1
+    speed: 1,
+    power: 0
   },
   分馏塔: [
     {
       name: "分馏塔",
-      speed: 1
+      speed: 1,
+      power: 0.72
     }
   ],
   传送带: [
@@ -138,10 +155,15 @@ export const getSbInfo = name => {
   if (obj instanceof Array) {
     return obj[+sbConfig[name]];
   } else {
+    let power = obj.power;
+    if (name === "矿脉") {
+      power = sbMap["采矿机"].power / (sbConfig["采矿机"] / sbConfig["矿脉"]);
+    }
     return {
       ...obj,
       name: `${obj.name}(${sbConfig[name]}/s)`,
-      speed: +sbConfig[name]
+      speed: +sbConfig[name],
+      power
     };
   }
 };
