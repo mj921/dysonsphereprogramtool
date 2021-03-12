@@ -4,7 +4,9 @@ export const defSb = {
   冶炼设备: 0,
   采矿机: 3,
   能量枢纽: 0,
-  轨道采集器: 1,
+  轨道采集器_氢: 1,
+  轨道采集器_重氢: 1,
+  轨道采集器_可燃冰: 1,
   化工厂: 0,
   原油精炼厂: 0,
   原油萃取站: 2,
@@ -108,7 +110,19 @@ export const sbMap = {
       power: 0
     }
   ],
-  轨道采集器: {
+  轨道采集器_氢: {
+    name: "轨道采集器",
+    baseName: "轨道采集器",
+    speed: 1,
+    power: 0
+  },
+  轨道采集器_重氢: {
+    name: "轨道采集器",
+    baseName: "轨道采集器",
+    speed: 1,
+    power: 0
+  },
+  轨道采集器_可燃冰: {
     name: "轨道采集器",
     baseName: "轨道采集器",
     speed: 1,
@@ -141,7 +155,7 @@ export const sbMap = {
   ]
 };
 
-export const getSbInfo = name => {
+export const getSbInfo = (name, cwName) => {
   const sbConfigStr = localStorage.getItem("sbConfig");
   let sbConfig = defSb;
   if (sbConfigStr) {
@@ -151,7 +165,8 @@ export const getSbInfo = name => {
       console.log(e);
     }
   }
-  const obj = sbMap[name];
+  const _name = name === "轨道采集器" ? `${name}_${cwName}` : name;
+  const obj = sbMap[_name];
   if (obj instanceof Array) {
     return obj[+sbConfig[name]];
   } else {
@@ -161,8 +176,8 @@ export const getSbInfo = name => {
     }
     return {
       ...obj,
-      name: `${obj.name}(${sbConfig[name]}/s)`,
-      speed: +sbConfig[name],
+      name: `${obj.name}(${sbConfig[_name]}/s)`,
+      speed: +sbConfig[_name],
       power
     };
   }

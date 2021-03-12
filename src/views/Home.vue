@@ -160,8 +160,8 @@
         <el-button @click="visible = false">关闭</el-button>
       </span>
     </el-dialog>
-    <el-dialog title="参数配置" :visible.sync="configVisible" width="700px">
-      <el-form label-width="100px" inline size="mini">
+    <el-dialog title="参数配置" :visible.sync="configVisible" width="800px">
+      <el-form label-width="140px" inline size="mini">
         <el-form-item label="制作台">
           <el-select
             v-model="sbConfig['制作台']"
@@ -181,7 +181,9 @@
         <el-form-item
           v-for="item in [
             '原油萃取站',
-            '轨道采集器',
+            '轨道采集器_氢',
+            '轨道采集器_重氢',
+            '轨道采集器_可燃冰',
             '抽水机',
             '采矿机',
             '矿脉'
@@ -414,7 +416,7 @@ export default {
         ];
       const q = obj.q;
       const m = obj.m;
-      const sb = getSbInfo(m);
+      const sb = getSbInfo(m, name);
       const speed = sb.speed;
       const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
       let csd = getSbInfo("传送带");
