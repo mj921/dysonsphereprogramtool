@@ -1,21 +1,95 @@
 <template>
   <div class="home" :class="{ vertical }">
     <div class="form">
-      <el-select v-model="currWp" filterable placeholder="请选择产物">
-        <el-option-group
-          v-for="group in list"
-          :key="group.name"
-          :label="group.name"
-        >
-          <el-option
-            v-for="item in group.options"
-            :key="item.value"
-            :value="item.value"
+      <div class="select-block">
+        <el-select v-model="currWp" filterable placeholder="请选择产物">
+          <el-option-group
+            v-for="group in list"
+            :key="group.name"
+            :label="group.name"
           >
-            <img class="select-img" :src="imgs[item.label]" />{{ item.label }}
-          </el-option>
-        </el-option-group>
-      </el-select>
+            <el-option
+              v-for="item in group.options"
+              :key="item.value"
+              :value="item.value"
+            >
+              <img class="select-img" :src="imgs[item.label]" />{{ item.label }}
+            </el-option>
+          </el-option-group>
+        </el-select>
+        <span>或</span>
+        <el-popover
+          style="margin-right: 10px;"
+          placement="bottom"
+          trigger="click"
+          popper-class="panel-popper"
+          v-model="imgSelectVisible"
+        >
+          <div
+            slot="reference"
+            class="tree-block"
+            :class="{
+              'has-children': data['需求产物'] && data['需求产物'].length > 1
+            }"
+          >
+            <el-button type="primary" size="small">选择产物(图片)</el-button>
+          </div>
+          <div class="select-tabs">
+            <dl
+              class="select-tab"
+              :class="{ curr: selectTab === '组件' }"
+              @click="selectTab = '组件'"
+            >
+              <img src="../assets/component-icon.png" alt="" />
+              <span>组件</span>
+            </dl>
+            <dl
+              class="select-tab"
+              :class="{ curr: selectTab === '建筑' }"
+              @click="selectTab = '建筑'"
+            >
+              <img src="../assets/factory-icon.png" alt="" />
+              <span>建筑</span>
+            </dl>
+          </div>
+          <div class="panel" v-show="selectTab === '组件'">
+            <div class="panel-wrapper">
+              <dl v-for="i in 7" :key="'row-' + i">
+                <dd
+                  :class="{ curr: wpMap['组件'][`${i}-${j}`] === currWp }"
+                  v-for="j in 12"
+                  :key="`col-${i}-${j}`"
+                  :title="wpMap['组件'][`${i}-${j}`]"
+                  @click="selectWp(wpMap['组件'][`${i}-${j}`])"
+                >
+                  <img
+                    v-if="wpMap['组件'][`${i}-${j}`]"
+                    :src="imgs[wpMap['组件'][`${i}-${j}`]]"
+                  />
+                </dd>
+              </dl>
+            </div>
+          </div>
+          <div class="panel" v-show="selectTab === '建筑'">
+            <div class="panel-wrapper">
+              <dl v-for="i in 7" :key="'row-' + i">
+                <dd
+                  :class="{ curr: wpMap['建筑'][`${i}-${j}`] === currWp }"
+                  v-for="j in 12"
+                  :key="`col-${i}-${j}`"
+                  :title="wpMap['建筑'][`${i}-${j}`]"
+                  @click="selectWp(wpMap['建筑'][`${i}-${j}`])"
+                >
+                  <img
+                    v-if="wpMap['建筑'][`${i}-${j}`]"
+                    :src="imgs[wpMap['建筑'][`${i}-${j}`]]"
+                  />
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </el-popover>
+      </div>
       <el-radio-group v-model="type" @change="typeChange">
         <el-radio label="产量"></el-radio>
         <el-radio label="设备"></el-radio>
@@ -161,13 +235,16 @@ export default {
   data() {
     const list = [];
     const imgs = {};
+    const wpMap = {};
     for (let key in wp) {
+      wpMap[key] = {};
       list.push({
         name: key,
         options: wp[key].map(item => {
           const arr = item.name.split("-");
           const name = arr[arr.length - 1];
           imgs[name] = "data:image/png;base64," + item.value;
+          wpMap[key][arr.slice(0, 2).join("-")] = name;
           return {
             value: name,
             label: name
@@ -187,6 +264,7 @@ export default {
     return {
       list,
       wp,
+      wpMap,
       imgs,
       currWp: "",
       data: {},
@@ -198,7 +276,9 @@ export default {
       visible: false,
       configVisible: false,
       sbConfig,
-      sbMap
+      sbMap,
+      selectTab: "组件",
+      imgSelectVisible: false
     };
   },
   watch: {
@@ -222,6 +302,10 @@ export default {
     };
   },
   methods: {
+    selectWp(wp) {
+      this.currWp = wp;
+      this.imgSelectVisible = false;
+    },
     iptHandle(type) {
       this.sbConfig[type] = this.sbConfig[type]
         .replace(/[^.0-9]/g, "")
@@ -403,7 +487,8 @@ export default {
 .home {
   background-color: #000;
   min-height: 100vh;
-  width: 1800px;
+  width: 1920px;
+  min-width: 100vw;
   color: #f5c62a;
   &.vertical {
     width: 7000px;
@@ -414,6 +499,39 @@ export default {
   display: flex;
   & > * {
     flex-grow: 1;
+  }
+}
+.panel {
+  background-color: #1c3436;
+  .panel-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 768px;
+    background-color: rgba($color: #000000, $alpha: 0.3);
+    padding: 2px;
+    dl {
+      display: flex;
+      margin: 0;
+      dd {
+        width: 60px;
+        margin: 0;
+        background-color: #1c3436;
+        margin: 2px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        &.curr,
+        &:hover {
+          background-color: rgba($color: #ffffff, $alpha: 0.2);
+        }
+        img {
+          height: 40px;
+          width: 40px;
+          margin: 0;
+        }
+      }
+    }
   }
 }
 img {
@@ -428,5 +546,48 @@ img {
   vertical-align: top;
   margin-right: 5px;
 }
+.form {
+  width: 90vw;
+  .select-block {
+    display: flex;
+    align-items: center;
+    & > * {
+      margin-right: 5px;
+    }
+  }
+}
+.select-tabs {
+  display: flex;
+  width: 154px;
+  margin-bottom: 5px;
+  .select-tab {
+    flex-grow: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    margin: 0;
+    margin-right: 5px;
+    &.curr,
+    &:hover {
+      background-color: rgba($color: #ffffff, $alpha: 0.1);
+    }
+    img {
+      width: 40px;
+      height: 40px;
+      margin-right: 0;
+    }
+    span {
+      line-height: 24px;
+      font-size: 14px;
+      color: #fff;
+    }
+  }
+}
 </style>
-<style lang="scss"></style>
+<style lang="scss">
+.el-popover.panel-popper {
+  background-color: #1c3436;
+}
+</style>
