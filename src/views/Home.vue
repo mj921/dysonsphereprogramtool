@@ -56,7 +56,11 @@
             <div class="panel-wrapper">
               <dl v-for="i in 7" :key="'row-' + i">
                 <dd
-                  :class="{ curr: wpMap['组件'][`${i}-${j}`] === currWp }"
+                  :class="{
+                    curr:
+                      wpMap['组件'][`${i}-${j}`] &&
+                      wpMap['组件'][`${i}-${j}`] === currWp
+                  }"
                   v-for="j in 12"
                   :key="`col-${i}-${j}`"
                   :title="wpMap['组件'][`${i}-${j}`]"
@@ -74,7 +78,11 @@
             <div class="panel-wrapper">
               <dl v-for="i in 7" :key="'row-' + i">
                 <dd
-                  :class="{ curr: wpMap['建筑'][`${i}-${j}`] === currWp }"
+                  :class="{
+                    curr:
+                      wpMap['建筑'][`${i}-${j}`] &&
+                      wpMap['建筑'][`${i}-${j}`] === currWp
+                  }"
                   v-for="j in 12"
                   :key="`col-${i}-${j}`"
                   :title="wpMap['建筑'][`${i}-${j}`]"
@@ -303,6 +311,7 @@ export default {
   },
   methods: {
     selectWp(wp) {
+      if (!wp) return;
       this.currWp = wp;
       this.imgSelectVisible = false;
     },
