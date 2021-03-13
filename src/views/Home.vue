@@ -567,7 +567,15 @@ img {
   margin-right: 5px;
 }
 .form {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 90vw;
+  min-width: 800px;
+  & > * {
+    margin-right: 3px;
+  }
   .select-block {
     display: flex;
     align-items: center;
