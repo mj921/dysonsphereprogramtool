@@ -171,7 +171,7 @@ export default {
         }
         this.config = config;
         localStorage.setItem("pfConfig", JSON.stringify(config));
-        this.createPf();
+        this.createPf(true);
       }
       this.visible = false;
     }

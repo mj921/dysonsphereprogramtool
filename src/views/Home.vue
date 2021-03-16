@@ -122,44 +122,41 @@
     </el-button>
     (tip:传送带按产物计算)
     <br />
-    <tree :data="data" :vertical="vertical" />
-    <el-dialog title="总览" :visible.sync="visible" width="700px">
-      <div>总耗电大约：{{ totalPower | numFmt }} M</div>
-      <div class="all">
-        <div>
-          <dl v-for="(item, i) in yl" :key="i">
-            <img :src="imgs[item.name]" alt="" />
-            <span style="color: #f50a0a;">
-              {{ item.name }} x {{ item.num }}
-            </span>
-            <img
-              :src="
-                /^矿脉/.test(item.sbName)
-                  ? imgs[item.name]
-                  : imgs[item.sbName.replace(/\([^\)]*\)/, '')]
-              "
-              alt=""
-            />{{ item.sbName }} x {{ item.sbNum | numFmt }}
-          </dl>
-        </div>
-        <div>
-          <dl v-for="(item, i) in sb" :key="i">
-            <img
-              :src="
-                /矿脉/.test(item.name)
-                  ? imgs[item.name.slice(0, item.name.indexOf('矿脉'))]
-                  : imgs[item.name.replace(/\([^\)]*\)/, '')]
-              "
-              alt=""
-            />
-            {{ item.name }} x {{ item.num | numFmt }}
-          </dl>
-        </div>
-      </div>
-      <span slot="footer">
-        <el-button @click="visible = false">关闭</el-button>
-      </span>
-    </el-dialog>
+    <el-tabs
+      v-show="tabList.length > 0"
+      :value="currWp"
+      tab-position="top"
+      closable
+      @tab-remove="removeTab"
+      @tab-click="tabChange"
+    >
+      <el-tab-pane
+        v-for="item in tabList"
+        :key="item"
+        :label="item"
+        :name="item"
+      >
+        <el-button @click="tabStaticVisible = true" style="margin-left: 10px;">
+          查看当前产物总览
+        </el-button>
+        <tree :data="tabMap[item].data" :vertical="vertical" />
+      </el-tab-pane>
+    </el-tabs>
+    <show-static
+      v-if="tabMap[currWp]"
+      :visible.sync="tabStaticVisible"
+      :yl="tabMap[currWp].yl"
+      :sb="tabMap[currWp].sb"
+      :imgs="imgs"
+      :total-power="tabMap[currWp].totalPower"
+    />
+    <show-static
+      :visible.sync="visible"
+      :yl="yl"
+      :sb="sb"
+      :imgs="imgs"
+      :total-power="totalPower"
+    />
     <el-dialog title="参数配置" :visible.sync="configVisible" width="800px">
       <el-form label-width="140px" inline size="mini">
         <el-form-item label="制作台">
@@ -237,11 +234,13 @@ import pf from "../data/pf1";
 import { getSbInfo, defSb, sbMap } from "../data/sb";
 import wp from "../data/data";
 import Tree from "../components/tree";
+import ShowStatic from "../components/showStatic";
 
 export default {
   name: "Home",
   components: {
-    Tree
+    Tree,
+    ShowStatic
   },
   data() {
     const list = [];
@@ -282,15 +281,15 @@ export default {
       vertical: false,
       type: "产量",
       num: 60,
-      yl: [],
-      sb: [],
       visible: false,
       configVisible: false,
       sbConfig,
       sbMap,
       selectTab: "组件",
       imgSelectVisible: false,
-      totalPower: 0
+      tabList: [],
+      tabMap: {},
+      tabStaticVisible: false
     };
   },
   watch: {
@@ -298,6 +297,48 @@ export default {
       if (val) {
         this.createPf();
       }
+    }
+  },
+  computed: {
+    yl() {
+      const map = {};
+      this.tabList.forEach(name => {
+        this.tabMap[name].yl.forEach(item => {
+          if (!map[item.name]) {
+            map[item.name] = {
+              name: item.name,
+              sbName: item.sbName,
+              num: item.num,
+              sbNum: item.sbNum
+            };
+          } else {
+            map[item.name].num += item.num;
+            map[item.name].sbNum += item.sbNum;
+          }
+        });
+      });
+      return Object.keys(map).map(key => map[key]);
+    },
+    sb() {
+      const map = {};
+      this.tabList.forEach(name => {
+        this.tabMap[name].yl.forEach(item => {
+          if (!map[item.name]) {
+            map[item.name] = {
+              name: item.name,
+              num: item.num
+            };
+          } else {
+            map[item.name].num += item.num;
+          }
+        });
+      });
+      return Object.keys(map).map(key => map[key]);
+    },
+    totalPower() {
+      return this.tabList.reduce((power, name) => {
+        return this.tabMap[name].totalPower + power;
+      }, 0);
     }
   },
   filters: {
@@ -314,6 +355,16 @@ export default {
     };
   },
   methods: {
+    tabChange(el) {
+      this.currWp = el.name;
+    },
+    removeTab(name) {
+      this.tabList.splice(this.tabList.indexOf(name), 1);
+      delete this.tabMap[name];
+      if (this.currWp === name) {
+        this.currWp = this.tabList.length > 0 ? this.tabList[0] : "";
+      }
+    },
     selectWp(wp) {
       if (!wp) return;
       this.currWp = wp;
@@ -349,9 +400,9 @@ export default {
     typeChange() {
       this.createPf();
     },
-    createPf() {
+    createPf(modifyPf = false) {
       this.num = +(this.num + "").replace(/[^0-9]/g, "");
-      if (!this.currWp) return;
+      if (!this.currWp || !pf[this.currWp]) return;
       const configStr = localStorage.getItem("pfConfig");
       let config = {};
       if (configStr) {
@@ -384,16 +435,34 @@ export default {
         default:
           num = this.num;
       }
-      this.data = this.getPf(this.currWp, num);
-      const [yl, sb] = this.getYl(this.data);
-      this.yl = Object.keys(yl).map(key => ({
+      if (
+        !modifyPf &&
+        this.tabMap[this.currWp] &&
+        this.tabMap[this.currWp].num === num
+      ) {
+        return;
+      }
+      const data = this.getPf(this.currWp, num);
+      const [yl1, sb1, totalPower] = this.getYl(data);
+      const yl = Object.keys(yl1).map(key => ({
         name: key,
-        ...yl[key]
+        ...yl1[key]
       }));
-      this.sb = Object.keys(sb).map(key => ({
+      const sb = Object.keys(sb1).map(key => ({
         name: key,
-        num: sb[key]
+        num: sb1[key]
       }));
+      if (!this.tabMap[this.currWp]) {
+        this.tabList.push(this.currWp);
+      }
+      this.tabMap[this.currWp] = {
+        data,
+        yl,
+        sb,
+        totalPower,
+        num
+      };
+      this.$forceUpdate();
     },
     getPf(name, num = 60, parentName = "root") {
       const configStr = localStorage.getItem("pfConfig");
@@ -454,7 +523,6 @@ export default {
       };
     },
     getYl(map, cache = {}, sb = {}, totalPower = { num: 0 }) {
-      const first = totalPower.num === 0;
       if (cache[map["名称"]]) {
         cache[map["名称"]].num += map["数量"];
         cache[map["名称"]].sbNum += map["设备数"];
@@ -477,11 +545,7 @@ export default {
       map["需求产物"].forEach(item => {
         this.getYl(item, cache, sb, totalPower);
       });
-
-      if (first) {
-        this.totalPower = totalPower.num;
-      }
-      return [cache, sb];
+      return [cache, sb, totalPower.num];
     },
     getBaseYl(map, cache = {}) {
       if (map.base || !map["需求产物"] || map["需求产物"].length === 0) {
@@ -512,13 +576,6 @@ export default {
   color: #f5c62a;
   &.vertical {
     width: 7000px;
-  }
-}
-.all {
-  color: #f5c62a;
-  display: flex;
-  & > * {
-    flex-grow: 1;
   }
 }
 .panel {

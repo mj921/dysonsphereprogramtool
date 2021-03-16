@@ -10,7 +10,9 @@ import {
   Radio,
   Popover,
   Checkbox,
-  Button
+  Button,
+  Tabs,
+  TabPane
 } from "element-ui";
 import "element-ui/lib/theme-chalk/input.css";
 import "element-ui/lib/theme-chalk/select.css";
@@ -24,6 +26,9 @@ import "element-ui/lib/theme-chalk/radio.css";
 import "element-ui/lib/theme-chalk/popover.css";
 import "element-ui/lib/theme-chalk/checkbox.css";
 import "element-ui/lib/theme-chalk/button.css";
+import "element-ui/lib/theme-chalk/tabs.css";
+import "element-ui/lib/theme-chalk/tab-pane.css";
+import "element-ui/lib/theme-chalk/icon.css";
 const components = [
   Input,
   Select,
@@ -36,7 +41,9 @@ const components = [
   Radio,
   Popover,
   Checkbox,
-  Button
+  Button,
+  Tabs,
+  TabPane
 ];
 export default Vue => {
   components.forEach(comp => {

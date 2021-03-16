@@ -139,3 +139,25 @@
     align-items: center;
   }
 }
+.el-tabs {
+  .el-tabs__item {
+    color: #f5c62a;
+    outline: none;
+    &.is-active {
+      color: #f50a0a;
+    }
+    .el-icon-close {
+      &:hover {
+        background-color: rgba($color: #fff, $alpha: 0.3);
+        border-color: transparent;
+        color: #fff;
+      }
+    }
+  }
+  .el-tabs__active-bar {
+    background-color: #f50a0a;
+  }
+  .el-tabs__nav-wrap::after {
+    background-color: #f5c62a;
+  }
+}
