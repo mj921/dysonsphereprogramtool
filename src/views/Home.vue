@@ -322,7 +322,7 @@ export default {
     sb() {
       const map = {};
       this.tabList.forEach(name => {
-        this.tabMap[name].yl.forEach(item => {
+        this.tabMap[name].sb.forEach(item => {
           if (!map[item.name]) {
             map[item.name] = {
               name: item.name,
@@ -412,8 +412,10 @@ export default {
           console.log(e);
         }
       }
-      const obj = pf[this.currWp][config[this.currWp] || 0];
+      const obj =
+        pf[this.currWp][(config.root && config.root[this.currWp]) || 0];
       let num, csd;
+      console.log(obj, pf[this.currWp], config);
       switch (this.type) {
         case "产量":
           num = this.num;

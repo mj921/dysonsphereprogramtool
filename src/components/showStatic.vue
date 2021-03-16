@@ -89,6 +89,7 @@ export default {
   img {
     width: 20px;
     height: 20px;
+    vertical-align: top;
   }
 }
 </style>
