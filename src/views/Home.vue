@@ -357,6 +357,8 @@ export default {
   methods: {
     tabChange(el) {
       this.currWp = el.name;
+      this.num = this.tabMap[el.name].num;
+      this.type = this.tabMap[el.name].type;
     },
     removeTab(name) {
       this.tabList.splice(this.tabList.indexOf(name), 1);
@@ -401,6 +403,14 @@ export default {
       this.createPf();
     },
     createPf(modifyPf = false) {
+      if (
+        !modifyPf &&
+        this.tabMap[this.currWp] &&
+        this.tabMap[this.currWp].num === this.num &&
+        this.tabMap[this.currWp].type === this.type
+      ) {
+        return;
+      }
       this.num = +(this.num + "").replace(/[^0-9]/g, "");
       if (!this.currWp || !pf[this.currWp]) return;
       const configStr = localStorage.getItem("pfConfig");
@@ -415,7 +425,6 @@ export default {
       const obj =
         pf[this.currWp][(config.root && config.root[this.currWp]) || 0];
       let num, csd;
-      console.log(obj, pf[this.currWp], config);
       switch (this.type) {
         case "产量":
           num = this.num;
@@ -437,13 +446,6 @@ export default {
         default:
           num = this.num;
       }
-      if (
-        !modifyPf &&
-        this.tabMap[this.currWp] &&
-        this.tabMap[this.currWp].num === num
-      ) {
-        return;
-      }
       const data = this.getPf(this.currWp, num);
       const [yl1, sb1, totalPower] = this.getYl(data);
       const yl = Object.keys(yl1).map(key => ({
@@ -462,7 +464,8 @@ export default {
         yl,
         sb,
         totalPower,
-        num
+        num: this.num,
+        type: this.type
       };
       this.$forceUpdate();
     },
