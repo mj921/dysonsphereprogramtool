@@ -459,14 +459,14 @@ export default {
       if (!this.tabMap[this.currWp]) {
         this.tabList.push(this.currWp);
       }
-      this.tabMap[this.currWp] = {
+      this.$set(this.tabMap, this.currWp, {
         data,
         yl,
         sb,
         totalPower,
         num: this.num,
         type: this.type
-      };
+      });
       this.$forceUpdate();
     },
     getPf(name, num = 60, parentName = "root") {
