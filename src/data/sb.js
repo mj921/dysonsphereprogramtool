@@ -76,12 +76,12 @@ export const sbMap = {
     {
       name: "制作台Mk.Ⅱ",
       speed: 1,
-      power: 0.48
+      power: 0.54
     },
     {
       name: "制作台Mk.Ⅲ",
       speed: 1.5,
-      power: 0.78
+      power: 1.08
     }
   ],
   冶炼设备: [
@@ -89,6 +89,11 @@ export const sbMap = {
       name: "电弧熔炉",
       speed: 1,
       power: 0.36
+    },
+    {
+      name: "位面熔炉",
+      speed: 2,
+      power: 1.44
     }
   ],
   采矿机: {

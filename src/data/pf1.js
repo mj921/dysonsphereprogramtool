@@ -143,16 +143,16 @@ export default {
   ],
   氘核燃料棒: [
     {
-      s: [{ name: "氘核燃料棒", n: 1 }],
+      s: [{ name: "氘核燃料棒", n: 2 }],
       group: "消耗品",
       m: "制作台",
       q: [
         { name: "钛合金", n: 1 },
-        { name: "重氢", n: 10 },
+        { name: "重氢", n: 20 },
         { name: "超级磁场环", n: 1 }
       ],
-      t: 6,
-      chanliang: 1
+      t: 12,
+      chanliang: 2
     }
   ],
   引力透镜: [
@@ -522,12 +522,12 @@ export default {
       chanliang: 1
     },
     {
-      s: [{ name: "金刚石", n: 1 }],
+      s: [{ name: "金刚石", n: 2 }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "金伯利矿石", n: 1 }],
-      t: 2,
-      chanliang: 1
+      t: 1.5,
+      chanliang: 2
     }
   ],
   塑料: [
@@ -596,12 +596,12 @@ export default {
       chanliang: 1
     },
     {
-      s: [{ name: "晶格硅", n: 1 }],
+      s: [{ name: "晶格硅", n: 2 }],
       group: "组件",
       m: "制作台",
       q: [{ name: "分形硅石", n: 1 }],
-      t: 4,
-      chanliang: 1
+      t: 1.5,
+      chanliang: 2
     }
   ],
   石材: [
@@ -713,9 +713,9 @@ export default {
       chanliang: 2
     }
   ],
-  卡西米尔晶片: [
+  卡西米尔晶体: [
     {
-      s: [{ name: "卡西米尔晶片", n: 1 }],
+      s: [{ name: "卡西米尔晶体", n: 1 }],
       group: "组件",
       m: "制作台",
       q: [
@@ -727,11 +727,11 @@ export default {
       chanliang: 1
     },
     {
-      s: [{ name: "卡西米尔晶片", n: 1 }],
+      s: [{ name: "卡西米尔晶体", n: 1 }],
       group: "组件",
       m: "制作台",
       q: [
-        { name: "光栅石", n: 6 },
+        { name: "光栅石", n: 4 },
         { name: "石墨烯", n: 2 },
         { name: "氢", n: 12 }
       ],
@@ -745,7 +745,7 @@ export default {
       group: "组件",
       m: "制作台",
       q: [
-        { name: "卡西米尔晶片", n: 1 },
+        { name: "卡西米尔晶体", n: 1 },
         { name: "钛化玻璃", n: 2 }
       ],
       t: 12,
@@ -948,7 +948,7 @@ export default {
       m: "制作台",
       q: [
         { name: "戴森球组件", n: 2 },
-        { name: "氘核燃料棒", n: 2 },
+        { name: "氘核燃料棒", n: 4 },
         { name: "量子芯片", n: 2 }
       ],
       t: 6,
@@ -986,15 +986,15 @@ export default {
   ],
   液氢燃料棒: [
     {
-      s: [{ name: "液氢燃料棒", n: 1 }],
+      s: [{ name: "液氢燃料棒", n: 2 }],
       group: "组件",
       m: "制作台",
       q: [
         { name: "钛块", n: 1 },
         { name: "氢", n: 5 }
       ],
-      t: 3,
-      chanliang: 1
+      t: 6,
+      chanliang: 2
     }
   ],
   电力感应塔: [
@@ -1138,9 +1138,9 @@ export default {
       group: "建筑",
       m: "制作台",
       q: [
-        { name: "高纯硅块", n: 6 },
-        { name: "铜块", n: 6 },
-        { name: "电路板", n: 4 }
+        { name: "高纯硅块", n: 10 },
+        { name: "铜块", n: 10 },
+        { name: "电路板", n: 5 }
       ],
       t: 5,
       chanliang: 1
@@ -1153,8 +1153,8 @@ export default {
       m: "制作台",
       q: [
         { name: "铁块", n: 6 },
-        { name: "超级磁场环", n: 6 },
-        { name: "晶格硅", n: 4 }
+        { name: "超级磁场环", n: 1 },
+        { name: "晶格硅", n: 6 }
       ],
       t: 5,
       chanliang: 1
@@ -1604,19 +1604,19 @@ export default {
       chanliang: 1
     }
   ],
-  反物质燃烧棒: [
+  反物质燃料棒: [
     {
-      s: [{ name: "反物质燃烧棒", n: 1 }],
+      s: [{ name: "反物质燃料棒", n: 2 }],
       group: "消耗品",
       m: "制作台",
       q: [
-        { name: "反物质", n: 10 },
-        { name: "氢", n: 10 },
+        { name: "反物质", n: 12 },
+        { name: "氢", n: 12 },
         { name: "湮灭约束球", n: 1 },
         { name: "钛合金", n: 1 }
       ],
-      t: 12,
-      chanliang: 1
+      t: 24,
+      chanliang: 2
     }
   ],
   人造恒星: [
@@ -1631,6 +1631,21 @@ export default {
         { name: "量子芯片", n: 10 }
       ],
       t: 30,
+      chanliang: 1
+    }
+  ],
+  位面熔炉: [
+    {
+      s: [{ name: "位面熔炉", n: 1 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "电弧熔炉", n: 1 },
+        { name: "框架材料", n: 5 },
+        { name: "位面过滤器", n: 4 },
+        { name: "单极磁石", n: 15 }
+      ],
+      t: 5,
       chanliang: 1
     }
   ]

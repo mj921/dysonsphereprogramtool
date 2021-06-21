@@ -159,19 +159,23 @@
     />
     <el-dialog title="参数配置" :visible.sync="configVisible" width="800px">
       <el-form label-width="140px" inline size="mini">
-        <el-form-item label="制作台">
+        <el-form-item
+          v-for="item in ['制作台', '冶炼设备']"
+          :key="item"
+          :label="item"
+        >
           <el-select
-            v-model="sbConfig['制作台']"
+            v-model="sbConfig[item]"
             filterable
-            placeholder="请选择制作台"
+            :placeholder="`请选择${item}`"
           >
             <el-option
-              v-for="(item, i) in sbMap['制作台']"
+              v-for="(jtem, i) in sbMap[item]"
               :key="i"
-              :label="item.name"
+              :label="jtem.name"
               :value="i"
             >
-              <img class="select-img" :src="imgs[item.name]" />{{ item.name }}
+              <img class="select-img" :src="imgs[jtem.name]" />{{ jtem.name }}
             </el-option>
           </el-select>
         </el-form-item>

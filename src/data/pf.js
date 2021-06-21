@@ -1022,7 +1022,7 @@ export default [
   {
     s: [
       {
-        name: "卡西米尔晶片",
+        name: "卡西米尔晶体",
         n: 1
       }
     ],
@@ -1055,7 +1055,7 @@ export default [
     m: "制作台",
     q: [
       {
-        name: "卡西米尔晶片",
+        name: "卡西米尔晶体",
         n: 1
       },
       {
@@ -1403,7 +1403,7 @@ export default [
   {
     s: [
       {
-        name: "卡西米尔晶片",
+        name: "卡西米尔晶体",
         n: 1
       }
     ],
@@ -2692,7 +2692,7 @@ export default [
   {
     s: [
       {
-        name: "反物质燃烧棒",
+        name: "反物质燃料棒",
         n: 1
       }
     ],
