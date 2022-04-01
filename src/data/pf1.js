@@ -1,3 +1,4 @@
+// 当前使用
 export default {
   宇宙矩阵: [
     {
@@ -1249,7 +1250,7 @@ export default {
   极速分拣器: [
     {
       s: [{ name: "极速分拣器", n: 2 }],
-      group: "组件",
+      group: "建筑",
       m: "制作台",
       q: [
         { name: "高速分拣器", n: 2 },
@@ -1259,10 +1260,56 @@ export default {
       chanliang: 2
     }
   ],
+  自动集装机: [
+    {
+      s: [{ name: "自动集装机", n: 1 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "钢材", n: 3 },
+        { name: "齿轮", n: 4 },
+        { name: "超级磁场环", n: 1 },
+        { name: "处理器", n: 2 }
+      ],
+      t: 4,
+      chanliang: 1
+    }
+  ],
+  大型采矿机: [
+    {
+      s: [{ name: "大型采矿机", n: 1 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "钛合金", n: 20 },
+        { name: "框架材料", n: 10 },
+        { name: "超级磁场环", n: 10 },
+        { name: "量子芯片", n: 4 },
+        { name: "光栅石", n: 40 }
+      ],
+      t: 20,
+      chanliang: 1
+    }
+  ],
+  地热发电站: [
+    {
+      s: [{ name: "地热发电站", n: 1 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "钢材", n: 15 },
+        { name: "铜块", n: 20 },
+        { name: "光子合并器", n: 4 },
+        { name: "超级磁场环", n: 1 }
+      ],
+      t: 6,
+      chanliang: 1
+    }
+  ],
   采矿机: [
     {
       s: [{ name: "采矿机", n: 1 }],
-      group: "组件",
+      group: "建筑",
       m: "制作台",
       q: [
         { name: "铁块", n: 4 },
@@ -1274,10 +1321,25 @@ export default {
       chanliang: 1
     }
   ],
+  喷涂机: [
+    {
+      s: [{ name: "喷涂机", n: 1 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "钢材", n: 4 },
+        { name: "电浆激发器", n: 2 },
+        { name: "电路板", n: 2 },
+        { name: "微晶元件", n: 2 }
+      ],
+      t: 3,
+      chanliang: 1
+    }
+  ],
   抽水机: [
     {
       s: [{ name: "抽水机", n: 1 }],
-      group: "组件",
+      group: "建筑",
       m: "制作台",
       q: [
         { name: "铁块", n: 8 },
@@ -1677,7 +1739,44 @@ export default {
           n: 2
         }
       ],
-      t: 2
+      t: 2,
+      chanliang: 1
+    }
+  ],
+  "增产剂Mk.Ⅰ": [
+    {
+      s: [{ name: "增产剂Mk.Ⅰ", n: 1 }],
+      group: "消耗品",
+      m: "制作台",
+      q: [{ name: "煤矿", n: 1 }],
+      t: 0.5,
+      chanliang: 1
+    }
+  ],
+  "增产剂Mk.Ⅱ": [
+    {
+      s: [{ name: "增产剂Mk.Ⅱ", n: 1 }],
+      group: "消耗品",
+      m: "制作台",
+      q: [
+        { name: "增产剂Mk.Ⅰ", n: 2 },
+        { name: "金刚石", n: 1 }
+      ],
+      t: 1,
+      chanliang: 1
+    }
+  ],
+  "增产剂Mk.Ⅲ": [
+    {
+      s: [{ name: "增产剂Mk.Ⅲ", n: 1 }],
+      group: "消耗品",
+      m: "制作台",
+      q: [
+        { name: "增产剂Mk.Ⅱ", n: 2 },
+        { name: "碳纳米管", n: 1 }
+      ],
+      t: 2,
+      chanliang: 1
     }
   ]
 };
