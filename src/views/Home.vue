@@ -1,10 +1,10 @@
 <template>
-  <div class="home" :class="{ vertical }">
+  <div class="home" :class="{ configvertical }">
     <div class="form">
       <div class="select-block">
-        <el-select v-model="currWp" filterable placeholder="请选择产物">
+        <el-select v-model="currentProduct" filterable placeholder="请选择产物">
           <el-option-group
-            v-for="group in list"
+            v-for="group in itemlist"
             :key="group.name"
             :label="group.name"
           >
@@ -23,74 +23,52 @@
           placement="bottom"
           trigger="click"
           popper-class="panel-popper"
-          v-model="imgSelectVisible"
+          v-model="visibleselect"
         >
           <div
             slot="reference"
             class="tree-block"
             :class="{
-              'has-children': data['需求产物'] && data['需求产物'].length > 1
+              'has-children':
+                data.productMaterial && data.productMaterial.length > 1
             }"
           >
             <el-button type="primary" size="small">选择产物(图片)</el-button>
           </div>
           <div class="select-tabs">
             <dl
+              v-for="(val, key) in itemname"
               class="select-tab"
-              :class="{ curr: selectTab === '组件' }"
-              @click="selectTab = '组件'"
+              :class="{ curr: itemtab === key }"
+              :key="key"
+              @click="itemtab = key"
             >
               <img src="../assets/component-icon.png" alt="" />
-              <span>组件</span>
-            </dl>
-            <dl
-              class="select-tab"
-              :class="{ curr: selectTab === '建筑' }"
-              @click="selectTab = '建筑'"
-            >
-              <img src="../assets/factory-icon.png" alt="" />
-              <span>建筑</span>
+              <span>{{ val }}</span>
             </dl>
           </div>
-          <div class="panel" v-show="selectTab === '组件'">
+          <div
+            v-for="(_, item) in itemname"
+            v-show="itemtab === item"
+            class="panel"
+            :key="item"
+          >
             <div class="panel-wrapper">
-              <dl v-for="i in 7" :key="'row-' + i">
+              <dl v-for="i in 7" :key="`${item}-row-${i}`">
                 <dd
                   :class="{
                     curr:
-                      wpMap['组件'][`${i}-${j}`] &&
-                      wpMap['组件'][`${i}-${j}`] === currWp
+                      itemmap[item][`${i}-${j}`] &&
+                      itemmap[item][`${i}-${j}`] === currentProduct
                   }"
-                  v-for="j in 12"
-                  :key="`col-${i}-${j}`"
-                  :title="wpMap['组件'][`${i}-${j}`]"
-                  @click="selectWp(wpMap['组件'][`${i}-${j}`])"
+                  v-for="j in 14"
+                  :key="`${item}-col-${i}-${j}`"
+                  :title="itemmap[item][`${i}-${j}`]"
+                  @click="selectWp(itemmap[item][`${i}-${j}`])"
                 >
                   <img
-                    v-if="wpMap['组件'][`${i}-${j}`]"
-                    :src="imgs[wpMap['组件'][`${i}-${j}`]]"
-                  />
-                </dd>
-              </dl>
-            </div>
-          </div>
-          <div class="panel" v-show="selectTab === '建筑'">
-            <div class="panel-wrapper">
-              <dl v-for="i in 7" :key="'row-' + i">
-                <dd
-                  :class="{
-                    curr:
-                      wpMap['建筑'][`${i}-${j}`] &&
-                      wpMap['建筑'][`${i}-${j}`] === currWp
-                  }"
-                  v-for="j in 12"
-                  :key="`col-${i}-${j}`"
-                  :title="wpMap['建筑'][`${i}-${j}`]"
-                  @click="selectWp(wpMap['建筑'][`${i}-${j}`])"
-                >
-                  <img
-                    v-if="wpMap['建筑'][`${i}-${j}`]"
-                    :src="imgs[wpMap['建筑'][`${i}-${j}`]]"
+                    v-if="itemmap[item][`${i}-${j}`]"
+                    :src="imgs[itemmap[item][`${i}-${j}`]]"
                   />
                 </dd>
               </dl>
@@ -98,23 +76,25 @@
           </div>
         </el-popover>
       </div>
-      <el-radio-group v-model="type" @change="typeChange">
+      <el-radio-group v-model="configtype" @change="typeChange">
         <el-radio label="产量"></el-radio>
         <el-radio label="设备"></el-radio>
         <el-radio label="传送带"></el-radio>
       </el-radio-group>
       <el-input
         style="width: 120px;"
-        v-model="num"
-        :placeholder="type === '产量' ? '每分钟产量' : '设备数'"
+        v-model="confignum"
+        :placeholder="configtype === '产量' ? '每分钟产量' : '设备数'"
         @blur="inputBlur"
-      ></el-input>
-      <el-checkbox v-model="vertical">是否水平</el-checkbox>
+      >
+        <template slot="append">/ min</template>
+      </el-input>
+      <el-checkbox v-model="configvertical">是否水平</el-checkbox>
     </div>
-    <el-button @click="visible = true" style="margin-left: 10px;">
+    <el-button @click="visibletotal = true" style="margin-left: 10px;">
       查看总览
     </el-button>
-    <el-button @click="configVisible = true" style="margin-left: 10px;">
+    <el-button @click="visibleconfig = true" style="margin-left: 10px;">
       参数配置
     </el-button>
     <el-button @click="clearCache" style="margin-left: 10px;">
@@ -124,7 +104,7 @@
     <br />
     <el-tabs
       v-show="tabList.length > 0"
-      :value="currWp"
+      :value="currentProduct"
       tab-position="top"
       closable
       @tab-remove="removeTab"
@@ -136,89 +116,98 @@
         :label="item"
         :name="item"
       >
-        <el-button @click="tabStaticVisible = true" style="margin-left: 10px;">
+        <el-button @click="visiblecurrent = true" style="margin-left: 10px;">
           查看当前产物总览
         </el-button>
-        <tree :data="tabMap[item].data" :vertical="vertical" />
+        <tree :data="tabMap[item].data" :vertical="configvertical" />
       </el-tab-pane>
     </el-tabs>
     <show-static
-      v-if="tabMap[currWp]"
-      :visible.sync="tabStaticVisible"
-      :yl="tabMap[currWp].yl"
-      :sb="tabMap[currWp].sb"
+      v-if="tabMap[currentProduct]"
+      :visible.sync="visiblecurrent"
+      :yl="tabMap[currentProduct].yl"
+      :sb="tabMap[currentProduct].sb"
       :imgs="imgs"
-      :total-power="tabMap[currWp].totalPower"
+      :total-power="tabMap[currentProduct].totalPower"
     />
     <show-static
-      :visible.sync="visible"
+      :visible.sync="visibletotal"
       :yl="yl"
       :sb="sb"
       :imgs="imgs"
       :total-power="totalPower"
     />
-    <el-dialog title="参数配置" :visible.sync="configVisible" width="800px">
+    <el-dialog title="参数配置" :visible.sync="visibleconfig" width="800px">
       <el-form label-width="140px" inline size="mini">
-        <el-form-item
-          v-for="item in ['制作台', '冶炼设备']"
-          :key="item"
-          :label="item"
-        >
+        <el-form-item label="传送带">
           <el-select
-            v-model="sbConfig[item]"
+            v-model="factorysetting['传送带']"
             filterable
-            :placeholder="`请选择${item}`"
+            placeholder="请选择传送带"
           >
             <el-option
-              v-for="(jtem, i) in sbMap[item]"
+              v-for="(item, i) in factoryparams['传送带']"
               :key="i"
-              :label="jtem.name"
+              :label="item.name"
               :value="i"
             >
-              <img class="select-img" :src="imgs[jtem.name]" />{{ jtem.name }}
+              <img v-if="i != 3" class="select-img" :src="imgs[item.name]" />
+              {{ item.name }}
             </el-option>
           </el-select>
         </el-form-item>
         <el-form-item
           v-for="item in [
-            '原油萃取站',
-            '轨道采集器_氢',
-            '轨道采集器_重氢',
-            '轨道采集器_可燃冰',
-            '抽水机',
-            '采矿机',
-            '矿脉'
+            '冶炼设备',
+            '制作台',
+            '化工厂',
+            '矩阵研究站',
+            '增产剂'
           ]"
           :key="item"
           :label="item"
         >
-          <el-input v-model="sbConfig[item]" @input="iptHandle(item)">
-            <template slot="append">/ s</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="传送带">
           <el-select
-            v-model="sbConfig['传送带']"
+            v-model="factorysetting[item]"
             filterable
-            placeholder="请选择传送带"
+            :placeholder="`请选择${item}`"
           >
             <el-option
-              v-for="(item, i) in sbMap['传送带']"
+              v-for="(jtem, i) in factoryparams[item]"
               :key="i"
-              :label="item.name"
+              :label="jtem.name"
               :value="i"
             >
               <img
-                v-if="imgs[item.name]"
+                v-if="jtem.name != '无'"
                 class="select-img"
-                :src="imgs[item.name]"
-              />{{ item.name }}
+                :src="imgs[jtem.name]"
+              />
+              {{ jtem.name }}
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="传送带运力" v-if="sbConfig['传送带'] === 3">
+        <el-form-item
+          v-for="item in [
+            '采矿机',
+            '大型采矿机',
+            '矿脉',
+            '抽水机',
+            '原油萃取站',
+            '轨道采集器_氢',
+            '轨道采集器_重氢',
+            '轨道采集器_可燃冰'
+          ]"
+          :key="item"
+          :label="item"
+        >
+          <el-input v-model="factorysetting[item]" @input="iptHandle(item)">
+            <template slot="append">/ s</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="传送带运力" v-if="factorysetting['传送带'] === 3">
           <el-input
-            v-model="sbConfig['自定义传送带']"
+            v-model="factorysetting['自定义传送带']"
             @input="iptHandle('自定义传送带')"
           >
             <template slot="append">/ s</template>
@@ -234,9 +223,10 @@
 </template>
 
 <script>
-import pf from "../data/pf1";
-import { getSbInfo, defSb, sbMap } from "../data/sb";
-import wp from "../data/data";
+import productAll from "../data/data";
+import formulaAll from "../data/pf1";
+import { factorydefault, factoryparams, loadConfig } from "../data/sb";
+// import imgs from "../data/imgs";
 import Tree from "../components/tree";
 import ShowStatic from "../components/showStatic";
 
@@ -247,18 +237,21 @@ export default {
     ShowStatic
   },
   data() {
-    const list = [];
-    const imgs = {};
-    const wpMap = {};
-    for (let key in wp) {
-      wpMap[key] = {};
-      list.push({
-        name: key,
-        options: wp[key].map(item => {
+    const itemname = { items: "组件", buildings: "建筑" };
+    const itemlist = [];
+    const itemmap = {};
+    productAll.material.map(item => {
+      productAll.imgs[item.name] = "data:image/png;base64," + item.value;
+    });
+    for (let key in itemname) {
+      itemmap[key] = {};
+      itemlist.push({
+        name: itemname[key],
+        options: productAll[key].map(item => {
           const arr = item.name.split("-");
           const name = arr[arr.length - 1];
-          imgs[name] = "data:image/png;base64," + item.value;
-          wpMap[key][arr.slice(0, 2).join("-")] = name;
+          productAll.imgs[name] = "data:image/png;base64," + item.value;
+          itemmap[key][arr.slice(0, 2).join("-")] = name;
           return {
             value: name,
             label: name
@@ -266,38 +259,32 @@ export default {
         })
       });
     }
-    const sbConfigStr = localStorage.getItem("sbConfig");
-    let sbConfig = defSb;
-    if (sbConfigStr) {
-      try {
-        sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
-      } catch (e) {
-        console.log(e);
-      }
-    }
+
     return {
-      list,
-      wp,
-      wpMap,
-      imgs,
-      currWp: "",
       data: {},
-      vertical: false,
-      type: "产量",
-      num: 60,
-      visible: false,
-      configVisible: false,
-      sbConfig,
-      sbMap,
-      selectTab: "组件",
-      imgSelectVisible: false,
+      imgs: productAll.imgs,
+      currentProduct: "",
       tabList: [],
       tabMap: {},
-      tabStaticVisible: false
+      itemtab: "items",
+      itemmap,
+      itemlist,
+      itemname,
+      configtype: "产量",
+      confignum: 60,
+      configvertical: false,
+      factorysetting: loadConfig(factorydefault.storagesetting, {
+        ...factorydefault
+      }),
+      factoryparams,
+      visibleselect: false,
+      visibletotal: false,
+      visibleconfig: false,
+      visiblecurrent: false
     };
   },
   watch: {
-    currWp(val) {
+    currentProduct(val) {
       if (val) {
         this.createPf();
       }
@@ -359,45 +346,72 @@ export default {
     };
   },
   methods: {
+    getFactoryInfo(name, subName) {
+      const config = this.factorysetting;
+      const _name = name === "轨道采集器" ? `${name}_${subName}` : name;
+      const obj = factoryparams[_name];
+      if (obj instanceof Array) {
+        return obj[config[name]];
+      }
+
+      if (name === "传送带" && this.factorysetting["传送带"] === 3) {
+        return {
+          name: `自定义传送带(${this.factorysetting["自定义传送带"]}/s)`,
+          speed: this.factorysetting["自定义传送带"]
+        };
+      }
+      if (name === "分馏塔") {
+        const speed = this.getFactoryInfo("传送带").speed;
+        return { ...obj, speed, name: `分馏塔(${speed}/s)` };
+      }
+
+      let power = obj.power;
+      if (name === "矿脉") {
+        power =
+          factoryparams["采矿机"].power / (config["采矿机"] / config["矿脉"]);
+      }
+      return {
+        ...obj,
+        name: `${obj.name}(${config[_name]}/s)`,
+        speed: config[_name],
+        power
+      };
+    },
     tabChange(el) {
-      this.currWp = el.name;
-      this.num = this.tabMap[el.name].num;
-      this.type = this.tabMap[el.name].type;
+      this.currentProduct = el.name;
+      this.confignum = this.tabMap[el.name].confignum;
+      this.configtype = this.tabMap[el.name].configtype;
     },
     removeTab(name) {
       this.tabList.splice(this.tabList.indexOf(name), 1);
       delete this.tabMap[name];
-      if (this.currWp === name) {
-        this.currWp = this.tabList.length > 0 ? this.tabList[0] : "";
+      if (this.currentProduct === name) {
+        this.currentProduct = this.tabList.length > 0 ? this.tabList[0] : "";
       }
     },
     selectWp(wp) {
       if (!wp) return;
-      this.currWp = wp;
-      this.imgSelectVisible = false;
+      this.currentProduct = wp;
+      this.visibleselect = false;
     },
     iptHandle(type) {
-      this.sbConfig[type] = this.sbConfig[type]
+      this.factorysetting[type] = this.factorysetting[type]
         .replace(/[^.0-9]/g, "")
         .replace(/^(\d*\.\d*)[^0-9]/, "$1")
         .replace(/^\.+/, "");
     },
     cancel() {
-      const sbConfigStr = localStorage.getItem("sbConfig");
-      let sbConfig = defSb;
-      if (sbConfigStr) {
-        try {
-          sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
-        } catch (e) {
-          console.log(e);
-        }
-      }
-      this.sbConfig = sbConfig;
-      this.configVisible = false;
+      this.factorysetting = loadConfig(factorydefault.storagesetting, {
+        ...factorydefault
+      });
+      this.visibleconfig = false;
     },
     save() {
-      localStorage.setItem("sbConfig", JSON.stringify(this.sbConfig));
-      this.configVisible = false;
+      localStorage.setItem(
+        factorydefault.storagesetting,
+        JSON.stringify(this.factorysetting)
+      );
+      this.visibleconfig = false;
       this.createPf();
     },
     inputBlur() {
@@ -409,49 +423,21 @@ export default {
     createPf(modifyPf = false) {
       if (
         !modifyPf &&
-        this.tabMap[this.currWp] &&
-        this.tabMap[this.currWp].num === this.num &&
-        this.tabMap[this.currWp].type === this.type
+        this.tabMap[this.currentProduct] &&
+        this.tabMap[this.currentProduct].confignum === this.confignum &&
+        this.tabMap[this.currentProduct].configtype === this.configtype
       ) {
         return;
       }
-      this.num = +(this.num + "").replace(/[^0-9]/g, "");
-      if (!this.currWp || !pf[this.currWp]) return;
-      const configStr = localStorage.getItem("pfConfig");
-      let config = {};
-      if (configStr) {
-        try {
-          config = JSON.parse(configStr);
-        } catch (e) {
-          console.log(e);
-        }
-      }
-      const obj =
-        pf[this.currWp][(config.root && config.root[this.currWp]) || 0];
-      let num, csd;
-      switch (this.type) {
-        case "产量":
-          num = this.num;
-          break;
-        case "设备":
-          num =
-            ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed;
-          break;
-        case "传送带":
-          csd = getSbInfo("传送带");
-          if (this.sbConfig["传送带"] === 3) {
-            csd = {
-              name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
-              speed: this.sbConfig["自定义传送带"]
-            };
-          }
-          num = this.num * 60 * csd.speed;
-          break;
-        default:
-          num = this.num;
-      }
-      const data = this.getPf(this.currWp, num);
-      const [yl1, sb1, totalPower] = this.getYl(data);
+      this.confignum = +(this.confignum + "").replace(/[^0-9]/g, "");
+      if (!this.currentProduct || !formulaAll[this.currentProduct]) return;
+      const data = this.getProduct(
+        "root",
+        this.currentProduct,
+        this.getProductNum(),
+        this.getProductConfig()
+      );
+      const [yl1, sb1, totalPower] = this.getOverview(data);
       const yl = Object.keys(yl1).map(key => ({
         name: key,
         ...yl1[key]
@@ -460,118 +446,141 @@ export default {
         name: key,
         num: sb1[key]
       }));
-      if (!this.tabMap[this.currWp]) {
-        this.tabList.push(this.currWp);
+      if (!this.tabMap[this.currentProduct]) {
+        this.tabList.push(this.currentProduct);
       }
-      this.$set(this.tabMap, this.currWp, {
+      this.$set(this.tabMap, this.currentProduct, {
         data,
         yl,
         sb,
         totalPower,
-        num: this.num,
-        type: this.type
+        confignum: this.confignum,
+        configtype: this.configtype
       });
       this.$forceUpdate();
     },
-    getPf(name, num = 60, parentName = "root") {
-      const configStr = localStorage.getItem("pfConfig");
-      let config = {};
-      if (configStr) {
-        try {
-          config = JSON.parse(configStr);
-        } catch (e) {
-          console.log(e);
-        }
-      }
-      const parentConfig = config[parentName];
-      const currPf = JSON.parse(JSON.stringify(pf[name]));
-      const obj =
-        currPf[
-          (parentConfig &&
-            typeof parentConfig === "object" &&
-            parentConfig[name]) ||
-            0
-        ];
-      const q = obj.q;
-      const m = obj.m;
-      const sb = getSbInfo(m, name);
-      const speed = sb.speed;
-      const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
-      let csd = getSbInfo("传送带");
-      if (this.sbConfig["传送带"] === 3) {
-        csd = {
-          name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
-          speed: this.sbConfig["自定义传送带"]
-        };
-      }
-      const csdNum = num / 60 / csd.speed;
-      // const r = num * obj.t
+    getProductConfig() {
       return {
-        名称: name,
-        数量: num,
-        设备: sb.name,
-        设备数: sbNum,
-        需求产物: q
-          .filter(item => item.name !== name)
-          .map(item => {
-            return this.getPf(
-              item.name,
-              (item.n * num) / (obj.chanliang || 1),
-              name
-            );
-          }),
-        base: obj.base,
-        img: this.imgs[name],
-        sbImg: this.imgs[sb.baseName || sb.name],
-        pf: currPf,
-        csdNum,
-        csdName: csd.name,
-        csdImg: this.imgs[csd.name],
-        parentName,
-        power: sb.power * sbNum
+        formula: loadConfig(factorydefault.storageformula, {}),
+        sprayed: loadConfig(factorydefault.storagesprayed, {}),
+        belt: this.getFactoryInfo("传送带"),
+        proliferator: this.getFactoryInfo("增产剂")
       };
     },
-    getYl(map, cache = {}, sb = {}, totalPower = { num: 0 }) {
-      if (cache[map["名称"]]) {
-        cache[map["名称"]].num += map["数量"];
-        cache[map["名称"]].sbNum += map["设备数"];
-      } else {
-        cache[map["名称"]] = {};
-        cache[map["名称"]].num = map["数量"];
-        cache[map["名称"]].sbName = map["设备"];
-        cache[map["名称"]].sbNum = map["设备数"];
-      }
-      let sbName = map["设备"];
-      if (/^矿脉/.test(sbName)) {
-        sbName = map["名称"] + sbName;
-      }
-      if (sb[sbName]) {
-        sb[sbName] += map["设备数"];
-      } else {
-        sb[sbName] = map["设备数"];
-      }
-      totalPower.num += map.power;
-      map["需求产物"].forEach(item => {
-        this.getYl(item, cache, sb, totalPower);
+    getProductNum() {
+      const config = loadConfig(factorydefault.storageformula, {
+        root: {}
       });
-      return [cache, sb, totalPower.num];
+      const formula =
+        formulaAll[this.currentProduct][
+          (config.root && config.root[this.currentProduct]) || 0
+        ];
+      switch (this.configtype) {
+        case "产量":
+          return this.confignum;
+        case "设备":
+          return (
+            ((this.confignum * (formula.chanliang || 1) * 60) / formula.t) *
+            this.getFactoryInfo(formula.m).speed
+          );
+        case "传送带":
+          return this.confignum * 60 * this.getFactoryInfo("传送带").speed;
+        default:
+          return this.confignum;
+      }
     },
-    getBaseYl(map, cache = {}) {
-      if (map.base || !map["需求产物"] || map["需求产物"].length === 0) {
-        if (cache[map["名称"]]) {
-          cache[map["名称"]] += map["数量"];
-        } else {
-          cache[map["名称"]] = map["数量"];
-        }
+    getProduct(parent, name, num = 60, config) {
+      const formulas = formulaAll[name];
+      const productIndex =
+        (config.formula[parent] && config.formula[parent][name]) || 0;
+      let formula = formulas[productIndex < 0 ? ~productIndex : productIndex];
+      const factory = this.getFactoryInfo(formula.m, name);
+
+      let energy = 1;
+      let speed = factory.speed;
+      let target = num;
+      let sprayedMode =
+        (config.sprayed[parent] && config.sprayed[parent][name]) || "none";
+      let sprayedNum = 0;
+      if (config.proliferator.count == 0) {
+        sprayedMode = "none";
+      } else if (sprayedMode == "speedup" && formula.p != -1) {
+        energy = config.proliferator.energy;
+        speed *= config.proliferator.speedup;
+      } else if (sprayedMode == "extra" && formula.p == undefined) {
+        target /= config.proliferator.extra;
+      } else {
+        sprayedMode = "none";
       }
-      map["需求产物"].forEach(item => {
-        this.getBaseYl(item, cache);
+      if (sprayedMode != "none") {
+        let s = formula.q.reduce((a, b) => a + (b.n || 1), 0);
+        sprayedNum =
+          ((target / (formula.chanliang || 1)) * s) / config.proliferator.count;
+      }
+
+      const factoryNum =
+        ((target / 60 / speed) * formula.t) / (formula.chanliang || 1);
+
+      return {
+        parent,
+        productName: name,
+        productNum: num,
+        productIndex,
+        productFormula: formulas,
+        productMaterial: formula.q
+          .filter(() => productIndex > -1)
+          .filter(item => item.name !== name)
+          .map(item => {
+            return this.getProduct(
+              name,
+              item.name,
+              (item.n * target) / (formula.chanliang || 1),
+              config
+            );
+          }),
+        factoryName: factory.name,
+        factoryNum,
+        factoryImg: factory.baseName || factory.name,
+        beltName: config.belt.name,
+        beltNum: num / 60 / config.belt.speed,
+        sprayedMode,
+        sprayedNum,
+        sprayedType: formula.p,
+        sprayedData: config.proliferator,
+        power: factory.power * factoryNum * energy
+      };
+    },
+    getOverview(data, products = {}, factorys = {}, power = { num: 0 }) {
+      if (products[data.productName]) {
+        products[data.productName].num += data.productNum;
+        products[data.productName].sbNum += data.factoryNum;
+      } else {
+        products[data.productName] = {};
+        products[data.productName].num = data.productNum;
+        products[data.productName].sbName = data.factoryName;
+        products[data.productName].sbNum = data.factoryNum;
+      }
+
+      let sbName = data.factoryName;
+      if (/^矿脉/.test(sbName)) {
+        sbName = data.productName + sbName;
+      }
+      factorys[sbName] = (factorys[sbName] || 0) + data.factoryNum;
+      if (data.sprayedNum > 0) {
+        factorys[data.sprayedData.name] =
+          (factorys[data.sprayedData.name] || 0) + data.sprayedNum;
+      }
+      power.num += data.power;
+      data.productMaterial.forEach(item => {
+        this.getOverview(item, products, factorys, power);
       });
-      return cache;
+      return [products, factorys, power.num];
     },
     clearCache() {
-      localStorage.removeItem("pfConfig");
-      localStorage.removeItem("sbConfig");
+      this.factorysetting = { ...factorydefault };
+      localStorage.removeItem(factorydefault.storagesetting);
+      localStorage.removeItem(factorydefault.storageformula);
+      localStorage.removeItem(factorydefault.storagesprayed);
     }
   }
 };
@@ -583,7 +592,7 @@ export default {
   width: 1920px;
   min-width: 100vw;
   color: #f5c62a;
-  &.vertical {
+  &.configvertical {
     width: 7000px;
   }
 }
@@ -592,18 +601,17 @@ export default {
   .panel-wrapper {
     display: flex;
     flex-direction: column;
-    width: 768px;
     background-color: rgba($color: #000000, $alpha: 0.3);
     padding: 2px;
     dl {
       display: flex;
       margin: 0;
       dd {
-        width: 60px;
+        width: 50px;
         margin: 0;
         background-color: #1c3436;
         margin: 2px;
-        height: 60px;
+        height: 50px;
         display: flex;
         justify-content: center;
         align-items: center;

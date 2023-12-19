@@ -5,7 +5,15 @@
     width="700px"
     class="show-static"
   >
-    <div>总耗电大约：{{ totalPower | numFmt }} M</div>
+    <div>
+      总耗电大约：{{ totalPower | numFmt }} M
+      <template v-if="dysonPower"
+        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;戴森球大约：{{
+          dysonPower | numFmt
+        }}
+        M</template
+      >
+    </div>
     <div class="all">
       <div>
         <dl v-for="(item, i) in yl" :key="i">
@@ -56,6 +64,14 @@ export default {
     imgs: Object
   },
   computed: {
+    dysonPower() {
+      for (let i of this.yl) {
+        if (i.name == "临界光子") {
+          return i.num * 20;
+        }
+      }
+      return 0;
+    },
     _visible: {
       get() {
         return this.visible;

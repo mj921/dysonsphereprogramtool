@@ -1,5 +1,5 @@
 <template>
-  <div class="tree" v-if="data['名称']" :class="{ vertical }">
+  <div class="tree" v-if="data.productName" :class="{ vertical }">
     <div class="tree-wrapper">
       <el-popover
         v-model="visible"
@@ -11,51 +11,93 @@
           slot="reference"
           class="tree-block"
           :class="{
-            'has-children': data['需求产物'] && data['需求产物'].length > 1
+            'has-children':
+              data.productMaterial && data.productMaterial.length > 1
           }"
         >
-          <div>
-            <img :src="data.img" /> {{ data["名称"] }} x
-            {{ data["数量"] | numFmt }}
+          <div :class="`sprayed-${data.sprayedMode}`">
+            <img :src="imgs[data.productName]" /> {{ data.productName }} x
+            {{ data.productNum | numFmt }}
           </div>
           <div>
             <img
-              :src="data['设备'].slice(0, 2) === '矿脉' ? data.img : data.sbImg"
+              :src="
+                data.factoryName.slice(0, 2) === '矿脉'
+                  ? imgs[data.productName]
+                  : imgs[data.factoryImg]
+              "
             />
-            {{ data["设备"] }} x {{ data["设备数"] | numFmt }}
+            {{ data.factoryName }} x {{ data.factoryNum | numFmt }}
           </div>
-          <div>
-            <img v-if="data.csdImg" :src="data.csdImg" />{{ data.csdName }} x
-            {{ data.csdNum | numFmt }}
+          <div
+            v-if="
+              data.factoryName != '黑雾残骸' && data.productName != '戴森球能量'
+            "
+          >
+            <img v-if="imgs[data.beltName]" :src="imgs[data.beltName]" />{{
+              data.beltName
+            }}
+            x
+            {{ data.beltNum | numFmt }}
+          </div>
+          <div v-if="data.sprayedMode != 'none'">
+            <img :src="imgs[data.sprayedData.name]" />
+            <template v-if="data.sprayedMode == 'speedup'"
+              >加速{{ data.sprayedData.speedup * 100 - 100 }}%</template
+            >
+            <template v-else
+              >增产{{ data.sprayedData.extra * 100 - 100 }}%</template
+            >
+            x {{ data.sprayedNum | numFmt }}
           </div>
         </div>
         <div>
+          <dl class="product-options">
+            <span v-if="data.productIndex < 0" @click.stop="changeOff(data)">
+              启用
+            </span>
+            <span
+              v-else-if="data.productMaterial.length > 0"
+              @click.stop="changeOff(data)"
+            >
+              禁用
+            </span>
+            <template v-if="data.sprayedType != -1">
+              <span
+                v-for="(item, i) in getProductList(data)"
+                :key="item"
+                @click.stop="changeSprayed(data, i)"
+              >
+                {{ item }}
+              </span>
+            </template>
+          </dl>
           <dl
             class="tree-pf"
             :class="{
-              curr:
-                ((data.parentName &&
-                  config[data.parentName] &&
-                  typeof config[data.parentName] === 'object' &&
-                  config[data.parentName][data['名称']]) ||
-                  0) === i
+              curr: data.productIndex === i || data.productIndex === ~i
             }"
-            v-for="(item, i) in data.pf"
+            v-for="(item, i) in data.productFormula"
             :key="i"
-            @click.stop="changePf(data, i)"
+            @click.stop="changeFormula(data, i)"
           >
             <template
               v-if="
                 [
                   '采矿机',
+                  '大型采矿机',
                   '轨道采集器',
-                  '原油萃取站',
                   '抽水机',
+                  '原油萃取站',
                   '射线接收站'
                 ].indexOf(item.m) > -1
               "
             >
               <img :src="imgs[item.m]" />
+              <img
+                v-if="item.m == '射线接收站' && i == 1"
+                :src="imgs['引力透镜']"
+              />
               <div class="not-time" v-if="item.s && item.s.length > 0">
                 <div>→</div>
               </div>
@@ -63,8 +105,8 @@
                 <img :src="imgs[jtem.name]" />
               </div>
             </template>
-            <template v-else-if="item.m === '矿脉'">
-              <img :src="imgs[data['名称']]" />
+            <template v-else-if="item.m === '矿脉' || item.m === '黑雾残骸'">
+              <img :src="imgs[data.productName]" />
               <div class="not-time" v-if="item.s && item.s.length > 0">
                 <div>→</div>
               </div>
@@ -93,11 +135,14 @@
         </div>
       </el-popover>
     </div>
-    <div class="tree-yl" v-if="data['需求产物'] && data['需求产物'].length > 0">
+    <div
+      class="tree-yl"
+      v-if="data.productMaterial && data.productMaterial.length > 0"
+    >
       <div
         class="tree-children"
-        :class="{ 'not-line': data['需求产物'].length <= 1 }"
-        v-for="(item, i) in data['需求产物']"
+        :class="{ 'not-line': data.productMaterial.length <= 1 }"
+        v-for="(item, i) in data.productMaterial"
         :key="i"
       >
         <tree :data="item" :vertical="vertical" />
@@ -107,7 +152,8 @@
 </template>
 
 <script>
-import imgs from "../data/imgs";
+import productAll from "../data/data";
+import { factorydefault, loadConfig } from "../data/sb";
 export default {
   name: "Tree",
   props: {
@@ -127,53 +173,67 @@ export default {
     }
   },
   data() {
-    const configStr = localStorage.getItem("pfConfig");
-    let config = {};
-    if (configStr) {
-      try {
-        config = JSON.parse(configStr);
-      } catch (e) {
-        console.log(e);
-      }
-    }
     return {
-      imgs,
-      config,
+      imgs: productAll.imgs,
       visible: false
     };
   },
   methods: {
-    changePf(data, i) {
-      const configStr = localStorage.getItem("pfConfig");
-      let config = {};
-      if (configStr) {
-        try {
-          config = JSON.parse(configStr);
-        } catch (e) {
-          console.log(e);
-        }
+    getProductList(data) {
+      if (data.sprayedData.count == 0) {
+        return ["未设置增产剂参数"];
       }
-      if (
-        ((config[data.parentName] &&
-          typeof config[data.parentName] === "object" &&
-          config[data.parentName][data["名称"]]) ||
-          0) !== i
-      ) {
-        if (
-          config[data.parentName] &&
-          typeof config[data.parentName] === "object"
-        ) {
-          config[data.parentName][data["名称"]] = i;
-        } else {
-          config[data.parentName] = {
-            [data["名称"]]: i
-          };
-        }
-        this.config = config;
-        localStorage.setItem("pfConfig", JSON.stringify(config));
-        this.createPf(true);
+      if (data.sprayedType == 1) {
+        return ["无", `加速${data.sprayedData.speedup * 100 - 100}%`];
       }
+      return [
+        "无",
+        `加速${data.sprayedData.speedup * 100 - 100}%`,
+        `增产${data.sprayedData.extra * 100 - 100}%`
+      ];
+    },
+    changeOff(data) {
+      this.changeData(
+        data.parent,
+        data.productName,
+        factorydefault.storageformula,
+        ~data.productIndex
+      );
+    },
+    changeSprayed(data, i) {
+      const mode = ["none", "speedup", "extra"];
+      if (data.sprayedMode != mode[i]) {
+        this.changeData(
+          data.parent,
+          data.productName,
+          factorydefault.storagesprayed,
+          mode[i]
+        );
+      }
+    },
+    changeFormula(data, i) {
+      if (data.productIndex != i) {
+        this.changeData(
+          data.parent,
+          data.productName,
+          factorydefault.storageformula,
+          i
+        );
+      }
+    },
+    changeData(parent, name, key, val) {
+      let config = loadConfig(key, {});
+      if (config[parent] && typeof config[parent] === "object") {
+        config[parent][name] = val;
+      } else {
+        config[parent] = {
+          [name]: val
+        };
+      }
+
+      localStorage.setItem(key, JSON.stringify(config));
       this.visible = false;
+      this.createPf(true);
     }
   }
 };
@@ -199,6 +259,12 @@ export default {
         width: 20px;
         height: 20px;
         vertical-align: top;
+      }
+      .sprayed-speedup {
+        color: #ffb377;
+      }
+      .sprayed-extra {
+        color: #6affff;
       }
       &.has-children {
         margin-right: 10px;
@@ -336,6 +402,16 @@ export default {
       vertical-align: bottom;
       font-size: 12px;
       line-height: 1em;
+    }
+  }
+  .product-options {
+    margin-top: 0;
+    margin-bottom: 0;
+    span {
+      display: inline-block;
+      margin-right: 8px;
+      min-width: 32px;
+      text-align: center;
     }
   }
   img {
