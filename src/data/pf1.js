@@ -1,14 +1,42 @@
 /** 配方 ，如果数据改变时有可能需要重置配方
- * s ： 产物(可能多产物)
+ * s ： 产物(可能多产物,第一个产物必须是配方产品)
  * q ： 需求
- * n ： 数量(如果不提供就是1)
  * m ： 生产设备
  * t ： 生产时间(秒)
- * c ： 目标产物数量
- * p ： 增产剂模式 -1：禁用 1：仅可加速
+ * p ： 增产剂模式 undefined：可加速增产 1：仅可加速 -1：禁用
+ * n ： 显示配方数量(如果不提供就是1)
+ * rn： 实际使用数量(如果不提供就是n)
+ * c ： 目标产物数量(自动计算 s[0].rn)
+ * cs： 产物数量(自动计算 sum(s.n) 影响传送带统计)
+ * cq： 原料数量(自动计算 sum(q.n) 影响增产剂消耗)
  */
 // 当前使用
-export default {
+
+export const formulaInit = () => {
+  const fn = i => {
+    i.n = i.n === undefined ? 1 : i.n;
+    i.rn = i.rn === undefined ? i.n : i.rn;
+  };
+  for (let key in formulaAll) {
+    for (let item of formulaAll[key]) {
+      item.s.forEach(fn);
+      item.q.forEach(fn);
+      item.cs = item.s.reduce((a, b) => a + (b.n || 1), 0);
+      item.cq = item.q.reduce((a, b) => a + (b.n || 1), 0);
+      item.c = item.s[0].rn;
+      if (key == "电力" || item.m == "黑雾残骸" || /采集器/.test(item.m)) {
+        item.cs = 0;
+      }
+      if (item.s.length > 1 && key != item.s[0].name) {
+        console.warn(
+          `warning: formula '${key}' first product is '${item.s[0].name}', must is '${key}'.`
+        );
+      }
+    }
+  }
+};
+
+export const formulaAll = {
   // 原料
   铁矿: [
     { s: [{ name: "铁矿" }], q: [], m: "矿脉", t: 1, p: -1 },
@@ -39,9 +67,9 @@ export default {
   原油: [{ s: [{ name: "原油" }], q: [], m: "原油萃取站", t: 1, p: -1 }],
   可燃冰: [
     {
-      s: [{ name: "可燃冰" }],
+      s: [{ name: "可燃冰" }, { name: "氢", n: 0 }],
       group: "组件",
-      m: "轨道采集器",
+      m: "冰巨采集器",
       q: [],
       t: 1,
       p: -1
@@ -77,7 +105,7 @@ export default {
   ],
   临界光子: [
     {
-      s: [{ name: "临界光子", n: 1 }],
+      s: [{ name: "临界光子" }],
       group: "组件",
       m: "射线接收站",
       q: [],
@@ -88,11 +116,8 @@ export default {
       s: [{ name: "临界光子", n: 3 }],
       group: "组件",
       m: "射线接收站",
-      q: [
-        { name: "引力透镜", n: 0.025 }
-      ],
+      q: [{ name: "引力透镜", n: 0.025 }],
       t: 15,
-      chanliang: 3,
       p: 1
     }
   ],
@@ -128,7 +153,7 @@ export default {
   ],
   高纯硅块: [
     {
-      s: [{ name: "高纯硅块", n: 1 }],
+      s: [{ name: "高纯硅块" }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "硅石", n: 2 }],
@@ -146,7 +171,7 @@ export default {
   ],
   石材: [
     {
-      s: [{ name: "石材", n: 1 }],
+      s: [{ name: "石材" }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "石矿", n: 1 }],
@@ -163,14 +188,11 @@ export default {
       p: 1
     },
     {
-      s: [
-        { name: "氢", n: 3 },
-        { name: "高级石墨", n: 1 }
-      ],
+      s: [{ name: "高级石墨" }, { name: "氢", n: 3, rn: 1 }],
       group: "组件",
       m: "原油精炼厂",
       q: [
-        { name: "氢", n: 2 },
+        { name: "氢", n: 2, rn: 0 },
         { name: "精炼油", n: 1 }
       ],
       t: 4,
@@ -179,25 +201,26 @@ export default {
   ],
   精炼油: [
     {
-      s: [{ name: "氢" }, { name: "精炼油", n: 2 }],
+      s: [
+        { name: "精炼油", n: 2 },
+        { name: "氢", n: 1 }
+      ],
       group: "组件",
       m: "原油精炼厂",
       q: [{ name: "原油", n: 2 }],
-      t: 4,
-      chanliang: 2
+      t: 4
     }
   ],
   石墨烯: [
     {
       s: [
-        { name: "氢", n: 1 },
-        { name: "石墨烯", n: 2 }
+        { name: "石墨烯", n: 2 },
+        { name: "氢", n: 1 }
       ],
       group: "组件",
       m: "化工厂",
       q: [{ name: "可燃冰", n: 2 }],
-      t: 2,
-      chanliang: 2
+      t: 2
     },
     {
       s: [{ name: "石墨烯", n: 2 }],
@@ -207,13 +230,12 @@ export default {
         { name: "硫酸", n: 1 },
         { name: "高级石墨", n: 3 }
       ],
-      t: 3,
-      chanliang: 2
+      t: 3
     }
   ],
   塑料: [
     {
-      s: [{ name: "塑料", n: 1 }],
+      s: [{ name: "塑料" }],
       group: "组件",
       m: "化工厂",
       q: [
@@ -225,7 +247,7 @@ export default {
   ],
   "增产剂Mk.Ⅰ": [
     {
-      s: [{ name: "增产剂Mk.Ⅰ", n: 1 }],
+      s: [{ name: "增产剂Mk.Ⅰ" }],
       group: "消耗品",
       m: "制作台",
       q: [{ name: "煤矿", n: 1 }],
@@ -234,7 +256,7 @@ export default {
   ],
   "增产剂Mk.Ⅱ": [
     {
-      s: [{ name: "增产剂Mk.Ⅱ", n: 1 }],
+      s: [{ name: "增产剂Mk.Ⅱ" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -246,7 +268,7 @@ export default {
   ],
   "增产剂Mk.Ⅲ": [
     {
-      s: [{ name: "增产剂Mk.Ⅲ", n: 1 }],
+      s: [{ name: "增产剂Mk.Ⅲ" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -258,7 +280,7 @@ export default {
   ],
   机枪弹箱: [
     {
-      s: [{ name: "机枪弹箱", n: 1 }],
+      s: [{ name: "机枪弹箱" }],
       group: "组件",
       m: "制作台",
       q: [{ name: "铜块", n: 4 }],
@@ -267,7 +289,7 @@ export default {
   ],
   导弹组: [
     {
-      s: [{ name: "导弹组", n: 1 }],
+      s: [{ name: "导弹组" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -298,13 +320,12 @@ export default {
         { name: "磁铁", n: 2 },
         { name: "铜块", n: 1 }
       ],
-      t: 1,
-      chanliang: 2
+      t: 1
     }
   ],
   晶格硅: [
     {
-      s: [{ name: "晶格硅", n: 1 }],
+      s: [{ name: "晶格硅" }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "高纯硅块", n: 1 }],
@@ -315,8 +336,7 @@ export default {
       group: "组件",
       m: "制作台",
       q: [{ name: "分形硅石", n: 1 }],
-      t: 1.5,
-      chanliang: 2
+      t: 1.5
     }
   ],
   钛合金: [
@@ -329,13 +349,12 @@ export default {
         { name: "钢材", n: 4 },
         { name: "硫酸", n: 8 }
       ],
-      t: 12,
-      chanliang: 4
+      t: 12
     }
   ],
   玻璃: [
     {
-      s: [{ name: "玻璃", n: 1 }],
+      s: [{ name: "玻璃" }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "石矿", n: 2 }],
@@ -344,7 +363,7 @@ export default {
   ],
   金刚石: [
     {
-      s: [{ name: "金刚石", n: 1 }],
+      s: [{ name: "金刚石" }],
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "高级石墨", n: 1 }],
@@ -355,13 +374,12 @@ export default {
       group: "组件",
       m: "冶炼设备",
       q: [{ name: "金伯利矿石", n: 1 }],
-      t: 1.5,
-      chanliang: 2
+      t: 1.5
     }
   ],
   有机晶体: [
     {
-      s: [{ name: "有机晶体", n: 1 }],
+      s: [{ name: "有机晶体" }],
       group: "组件",
       m: "化工厂",
       q: [
@@ -391,7 +409,7 @@ export default {
   ],
   燃烧单元: [
     {
-      s: [{ name: "燃烧单元", n: 1 }],
+      s: [{ name: "燃烧单元" }],
       group: "组件",
       m: "制作台",
       q: [{ name: "煤矿", n: 3 }],
@@ -408,8 +426,7 @@ export default {
         { name: "塑料", n: 2 },
         { name: "硫酸", n: 1 }
       ],
-      t: 6,
-      chanliang: 2
+      t: 6
     }
   ],
   晶石爆破单元: [
@@ -422,13 +439,12 @@ export default {
         { name: "卡西米尔晶体", n: 1 },
         { name: "晶格硅", n: 8 }
       ],
-      t: 24,
-      chanliang: 8
+      t: 24
     }
   ],
   钛化弹箱: [
     {
-      s: [{ name: "钛化弹箱", n: 1 }],
+      s: [{ name: "钛化弹箱" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -449,8 +465,7 @@ export default {
         { name: "爆破单元", n: 4 },
         { name: "推进器", n: 2 }
       ],
-      t: 4,
-      chanliang: 2
+      t: 4
     }
   ],
 
@@ -465,7 +480,7 @@ export default {
   ],
   电动机: [
     {
-      s: [{ name: "电动机", n: 1 }],
+      s: [{ name: "电动机" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -486,8 +501,7 @@ export default {
         { name: "钛块", n: 2 },
         { name: "水", n: 2 }
       ],
-      t: 5,
-      chanliang: 2
+      t: 5
     }
   ],
   棱镜: [
@@ -496,13 +510,12 @@ export default {
       group: "组件",
       m: "制作台",
       q: [{ name: "玻璃", n: 3 }],
-      t: 2,
-      chanliang: 2
+      t: 2
     }
   ],
   钛晶石: [
     {
-      s: [{ name: "钛晶石", n: 1 }],
+      s: [{ name: "钛晶石" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -514,7 +527,7 @@ export default {
   ],
   动力引擎: [
     {
-      s: [{ name: "动力引擎", n: 1 }],
+      s: [{ name: "动力引擎" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -526,7 +539,7 @@ export default {
   ],
   推进器: [
     {
-      s: [{ name: "推进器", n: 1 }],
+      s: [{ name: "推进器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -538,7 +551,7 @@ export default {
   ],
   加力推进器: [
     {
-      s: [{ name: "加力推进器", n: 1 }],
+      s: [{ name: "加力推进器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -550,7 +563,7 @@ export default {
   ],
   超合金弹箱: [
     {
-      s: [{ name: "超合金弹箱", n: 1 }],
+      s: [{ name: "超合金弹箱" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -570,8 +583,7 @@ export default {
         { name: "晶石爆破单元", n: 6 },
         { name: "奇异物质", n: 3 }
       ],
-      t: 6,
-      chanliang: 3
+      t: 6
     }
   ],
 
@@ -586,7 +598,7 @@ export default {
   ],
   电磁涡轮: [
     {
-      s: [{ name: "电磁涡轮", n: 1 }],
+      s: [{ name: "电磁涡轮" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -616,13 +628,12 @@ export default {
         { name: "铁块", n: 2 },
         { name: "铜块", n: 1 }
       ],
-      t: 1,
-      chanliang: 2
+      t: 1
     }
   ],
   引力透镜: [
     {
-      s: [{ name: "引力透镜", n: 1 }],
+      s: [{ name: "引力透镜" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -642,11 +653,10 @@ export default {
         { name: "石矿", n: 8 },
         { name: "水", n: 4 }
       ],
-      t: 6,
-      chanliang: 4
+      t: 6
     },
     {
-      s: [{ name: "硫酸", n: 1 }],
+      s: [{ name: "硫酸" }],
       group: "组件",
       m: "抽水机",
       q: [],
@@ -655,9 +665,17 @@ export default {
   ],
   氢: [
     {
-      s: [{ name: "氢" }],
+      s: [{ name: "氢" }, { name: "重氢", n: 0 }],
       group: "组件",
-      m: "轨道采集器",
+      m: "气巨采集器",
+      q: [],
+      t: 1,
+      p: -1
+    },
+    {
+      s: [{ name: "氢" }, { name: "可燃冰", n: 0 }],
+      group: "组件",
+      m: "冰巨采集器",
       q: [],
       t: 1,
       p: -1
@@ -671,13 +689,13 @@ export default {
     },
     {
       s: [
-        { name: "氢", n: 3 },
+        { name: "氢", n: 3, rn: 1 },
         { name: "高级石墨", n: 1 }
       ],
       group: "组件",
       m: "原油精炼厂",
       q: [
-        { name: "氢", n: 2 },
+        { name: "氢", n: 2, rn: 0 },
         { name: "精炼油", n: 1 }
       ],
       t: 4,
@@ -685,10 +703,7 @@ export default {
       p: 1
     },
     {
-      s: [
-        { name: "氢", n: 1 },
-        { name: "石墨烯", n: 2 }
-      ],
+      s: [{ name: "氢" }, { name: "石墨烯", n: 2 }],
       group: "组件",
       m: "化工厂",
       q: [{ name: "可燃冰", n: 2 }],
@@ -696,14 +711,13 @@ export default {
     },
     {
       s: [
-        { name: "反物质", n: 2 },
-        { name: "氢", n: 2 }
+        { name: "氢", n: 2 },
+        { name: "反物质", n: 2 }
       ],
       group: "组件",
       m: "微型粒子对撞机",
       q: [{ name: "临界光子", n: 2 }],
       t: 2,
-      chanliang: 2,
       p: 1
     }
   ],
@@ -716,21 +730,19 @@ export default {
         { name: "石墨烯", n: 3 },
         { name: "钛块", n: 1 }
       ],
-      t: 4,
-      chanliang: 2
+      t: 4
     },
     {
       s: [{ name: "碳纳米管", n: 2 }],
       group: "组件",
       m: "化工厂",
       q: [{ name: "刺笋结晶", n: 6 }],
-      t: 4,
-      chanliang: 2
+      t: 4
     }
   ],
   奇异物质: [
     {
-      s: [{ name: "奇异物质", n: 1 }],
+      s: [{ name: "奇异物质" }],
       group: "组件",
       m: "微型粒子对撞机",
       q: [
@@ -743,7 +755,7 @@ export default {
   ],
   配送运输机: [
     {
-      s: [{ name: "配送运输机", n: 1 }],
+      s: [{ name: "配送运输机" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -756,7 +768,7 @@ export default {
   ],
   物流运输机: [
     {
-      s: [{ name: "物流运输机", n: 1 }],
+      s: [{ name: "物流运输机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -769,7 +781,7 @@ export default {
   ],
   星际物流运输机: [
     {
-      s: [{ name: "星际物流运输机", n: 1 }],
+      s: [{ name: "星际物流运输机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -782,7 +794,7 @@ export default {
   ],
   等离子胶囊: [
     {
-      s: [{ name: "等离子胶囊", n: 1 }],
+      s: [{ name: "等离子胶囊" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -795,7 +807,7 @@ export default {
   ],
   炮弹组: [
     {
-      s: [{ name: "炮弹组", n: 1 }],
+      s: [{ name: "炮弹组" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -808,7 +820,7 @@ export default {
 
   电浆激发器: [
     {
-      s: [{ name: "电浆激发器", n: 1 }],
+      s: [{ name: "电浆激发器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -820,7 +832,7 @@ export default {
   ],
   超级磁场环: [
     {
-      s: [{ name: "超级磁场环", n: 1 }],
+      s: [{ name: "超级磁场环" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -833,7 +845,7 @@ export default {
   ],
   粒子带宽: [
     {
-      s: [{ name: "粒子带宽", n: 1 }],
+      s: [{ name: "粒子带宽" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -846,7 +858,7 @@ export default {
   ],
   处理器: [
     {
-      s: [{ name: "处理器", n: 1 }],
+      s: [{ name: "处理器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -858,7 +870,7 @@ export default {
   ],
   卡西米尔晶体: [
     {
-      s: [{ name: "卡西米尔晶体", n: 1 }],
+      s: [{ name: "卡西米尔晶体" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -869,7 +881,7 @@ export default {
       t: 4
     },
     {
-      s: [{ name: "卡西米尔晶体", n: 1 }],
+      s: [{ name: "卡西米尔晶体" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -882,7 +894,7 @@ export default {
   ],
   粒子容器: [
     {
-      s: [{ name: "粒子容器", n: 1 }],
+      s: [{ name: "粒子容器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -893,7 +905,7 @@ export default {
       t: 4
     },
     {
-      s: [{ name: "粒子容器", n: 1 }],
+      s: [{ name: "粒子容器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -905,9 +917,9 @@ export default {
   ],
   重氢: [
     {
-      s: [{ name: "重氢" }],
+      s: [{ name: "重氢" }, { name: "氢", n: 0 }],
       group: "组件",
-      m: "轨道采集器",
+      m: "气巨采集器",
       q: [],
       t: 1,
       p: -1
@@ -918,18 +930,17 @@ export default {
       m: "微型粒子对撞机",
       q: [{ name: "氢", n: 10 }],
       t: 2.5,
-      chanliang: 5,
       p: 1
     },
     {
       s: [
-        { name: "重氢", n: 0.01 }
+        { name: "重氢", n: 0.01 },
+        { name: "氢", n: 0.99, rn: 0.0 }
       ],
       group: "组件",
       m: "分馏塔",
-      q: [{ name: "氢", n: 0.01 }],
+      q: [{ name: "氢", n: 1, rn: 0.01 }],
       t: 1,
-      chanliang: 0.01,
       p: 1
     }
   ],
@@ -942,13 +953,12 @@ export default {
         { name: "石墨烯", n: 1 },
         { name: "光子合并器", n: 1 }
       ],
-      t: 4,
-      chanliang: 2
+      t: 4
     }
   ],
   框架材料: [
     {
-      s: [{ name: "框架材料", n: 1 }],
+      s: [{ name: "框架材料" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -961,7 +971,7 @@ export default {
   ],
   戴森球组件: [
     {
-      s: [{ name: "戴森球组件", n: 1 }],
+      s: [{ name: "戴森球组件" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -974,7 +984,7 @@ export default {
   ],
   小型运载火箭: [
     {
-      s: [{ name: "小型运载火箭", n: 1 }],
+      s: [{ name: "小型运载火箭" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -987,7 +997,7 @@ export default {
   ],
   反物质胶囊: [
     {
-      s: [{ name: "反物质胶囊", n: 1 }],
+      s: [{ name: "反物质胶囊" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1001,7 +1011,7 @@ export default {
   ],
   高爆炮弹组: [
     {
-      s: [{ name: "高爆炮弹组", n: 1 }],
+      s: [{ name: "高爆炮弹组" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1015,7 +1025,7 @@ export default {
 
   光子合并器: [
     {
-      s: [{ name: "光子合并器", n: 1 }],
+      s: [{ name: "光子合并器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1025,7 +1035,7 @@ export default {
       t: 3
     },
     {
-      s: [{ name: "光子合并器", n: 1 }],
+      s: [{ name: "光子合并器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1037,7 +1047,7 @@ export default {
   ],
   微晶元件: [
     {
-      s: [{ name: "微晶元件", n: 1 }],
+      s: [{ name: "微晶元件" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1049,7 +1059,7 @@ export default {
   ],
   量子芯片: [
     {
-      s: [{ name: "量子芯片", n: 1 }],
+      s: [{ name: "量子芯片" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1068,8 +1078,7 @@ export default {
         { name: "钛块", n: 1 },
         { name: "氢", n: 10 }
       ],
-      t: 6,
-      chanliang: 2
+      t: 6
     }
   ],
   氘核燃料棒: [
@@ -1082,8 +1091,7 @@ export default {
         { name: "重氢", n: 20 },
         { name: "超级磁场环", n: 1 }
       ],
-      t: 12,
-      chanliang: 2
+      t: 12
     }
   ],
   反物质燃料棒: [
@@ -1098,13 +1106,12 @@ export default {
         { name: "钛合金", n: 1 }
       ],
       t: 24,
-      chanliang: 2,
       p: 1
     }
   ],
   奇异湮灭燃料棒: [
     {
-      s: [{ name: "奇异湮灭燃料棒", n: 1 }],
+      s: [{ name: "奇异湮灭燃料棒" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1119,7 +1126,7 @@ export default {
   ],
   位面过滤器: [
     {
-      s: [{ name: "位面过滤器", n: 1 }],
+      s: [{ name: "位面过滤器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1138,13 +1145,12 @@ export default {
       group: "组件",
       m: "微型粒子对撞机",
       q: [{ name: "临界光子", n: 2 }],
-      t: 2,
-      chanliang: 2
+      t: 2
     }
   ],
   湮灭约束球: [
     {
-      s: [{ name: "湮灭约束球", n: 1 }],
+      s: [{ name: "湮灭约束球" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1156,7 +1162,7 @@ export default {
   ],
   晶石炮弹组: [
     {
-      s: [{ name: "晶石炮弹组", n: 1 }],
+      s: [{ name: "晶石炮弹组" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1168,9 +1174,9 @@ export default {
     }
   ],
 
-  蓝矩阵: [
+  电磁矩阵: [
     {
-      s: [{ name: "蓝矩阵" }],
+      s: [{ name: "电磁矩阵" }],
       q: [
         { name: "磁线圈", n: 1 },
         { name: "电路板", n: 1 }
@@ -1180,9 +1186,9 @@ export default {
       group: "产品"
     }
   ],
-  红矩阵: [
+  能量矩阵: [
     {
-      s: [{ name: "红矩阵" }],
+      s: [{ name: "能量矩阵" }],
       q: [
         { name: "高级石墨", n: 2 },
         { name: "氢", n: 2 }
@@ -1192,9 +1198,9 @@ export default {
       group: "产品"
     }
   ],
-  黄矩阵: [
+  结构矩阵: [
     {
-      s: [{ name: "黄矩阵" }],
+      s: [{ name: "结构矩阵" }],
       q: [
         { name: "金刚石", n: 1 },
         { name: "钛晶石", n: 1 }
@@ -1204,9 +1210,9 @@ export default {
       group: "产品"
     }
   ],
-  紫矩阵: [
+  信息矩阵: [
     {
-      s: [{ name: "紫矩阵" }],
+      s: [{ name: "信息矩阵" }],
       q: [
         { name: "处理器", n: 2 },
         { name: "粒子带宽", n: 1 }
@@ -1216,28 +1222,27 @@ export default {
       group: "产品"
     }
   ],
-  绿矩阵: [
+  引力矩阵: [
     {
-      s: [{ name: "绿矩阵", n: 2 }],
+      s: [{ name: "引力矩阵", n: 2 }],
       q: [
         { name: "量子芯片", n: 1 },
         { name: "引力透镜", n: 1 }
       ],
       t: 24,
       m: "矩阵研究站",
-      group: "产品",
-      chanliang: 2
+      group: "产品"
     }
   ],
   宇宙矩阵: [
     {
       s: [{ name: "宇宙矩阵" }],
       q: [
-        { name: "蓝矩阵", n: 1 },
-        { name: "红矩阵", n: 1 },
-        { name: "黄矩阵", n: 1 },
-        { name: "紫矩阵", n: 1 },
-        { name: "绿矩阵", n: 1 },
+        { name: "电磁矩阵", n: 1 },
+        { name: "能量矩阵", n: 1 },
+        { name: "结构矩阵", n: 1 },
+        { name: "信息矩阵", n: 1 },
+        { name: "引力矩阵", n: 1 },
         { name: "反物质", n: 1 }
       ],
       t: 15,
@@ -1247,7 +1252,7 @@ export default {
   ],
   原型机: [
     {
-      s: [{ name: "原型机", n: 1 }],
+      s: [{ name: "原型机" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1261,7 +1266,7 @@ export default {
   ],
   精准无人机: [
     {
-      s: [{ name: "精准无人机", n: 1 }],
+      s: [{ name: "精准无人机" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1275,7 +1280,7 @@ export default {
   ],
   攻击无人机: [
     {
-      s: [{ name: "攻击无人机", n: 1 }],
+      s: [{ name: "攻击无人机" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1289,7 +1294,7 @@ export default {
   ],
   护卫舰: [
     {
-      s: [{ name: "护卫舰", n: 1 }],
+      s: [{ name: "护卫舰" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1303,7 +1308,7 @@ export default {
   ],
   驱逐舰: [
     {
-      s: [{ name: "驱逐舰", n: 1 }],
+      s: [{ name: "驱逐舰" }],
       group: "消耗品",
       m: "制作台",
       q: [
@@ -1321,11 +1326,10 @@ export default {
       group: "消耗品",
       m: "制作台",
       q: [{ name: "绿矩阵", n: 1 }],
-      t: 10,
-      chanliang: 8
+      t: 10
     },
     {
-      s: [{ name: "空间翘曲器", n: 1 }],
+      s: [{ name: "空间翘曲器" }],
       group: "消耗品",
       m: "制作台",
       q: [{ name: "引力透镜", n: 1 }],
@@ -1334,7 +1338,7 @@ export default {
   ],
   地基: [
     {
-      s: [{ name: "地基", n: 1 }],
+      s: [{ name: "地基" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1348,7 +1352,7 @@ export default {
   // 建筑
   电力感应塔: [
     {
-      s: [{ name: "电力感应塔", n: 1 }],
+      s: [{ name: "电力感应塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1360,7 +1364,7 @@ export default {
   ],
   无线输电塔: [
     {
-      s: [{ name: "无线输电塔", n: 1 }],
+      s: [{ name: "无线输电塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1373,7 +1377,7 @@ export default {
   ],
   卫星配电站: [
     {
-      s: [{ name: "卫星配电站", n: 1 }],
+      s: [{ name: "卫星配电站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1387,7 +1391,7 @@ export default {
   ],
   风力涡轮机: [
     {
-      s: [{ name: "风力涡轮机", n: 1 }],
+      s: [{ name: "风力涡轮机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1400,7 +1404,7 @@ export default {
   ],
   火力发电机: [
     {
-      s: [{ name: "火力发电机", n: 1 }],
+      s: [{ name: "火力发电机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1414,7 +1418,7 @@ export default {
   ],
   太阳能板: [
     {
-      s: [{ name: "太阳能板", n: 1 }],
+      s: [{ name: "太阳能板" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1427,7 +1431,7 @@ export default {
   ],
   蓄电池: [
     {
-      s: [{ name: "蓄电池", n: 1 }],
+      s: [{ name: "蓄电池" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1450,7 +1454,7 @@ export default {
   ],
   地热发电站: [
     {
-      s: [{ name: "地热发电站", n: 1 }],
+      s: [{ name: "地热发电站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1464,7 +1468,7 @@ export default {
   ],
   微型聚变发电站: [
     {
-      s: [{ name: "微型聚变发电站", n: 1 }],
+      s: [{ name: "微型聚变发电站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1478,7 +1482,7 @@ export default {
   ],
   能量枢纽: [
     {
-      s: [{ name: "能量枢纽", n: 1 }],
+      s: [{ name: "能量枢纽" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1492,7 +1496,7 @@ export default {
   ],
   射线接收站: [
     {
-      s: [{ name: "射线接收站", n: 1 }],
+      s: [{ name: "射线接收站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1507,7 +1511,7 @@ export default {
   ],
   人造恒星: [
     {
-      s: [{ name: "人造恒星", n: 1 }],
+      s: [{ name: "人造恒星" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1529,8 +1533,7 @@ export default {
         { name: "铁块", n: 2 },
         { name: "齿轮", n: 1 }
       ],
-      t: 1,
-      chanliang: 3
+      t: 1
     }
   ],
   高速传送带: [
@@ -1543,7 +1546,6 @@ export default {
         { name: "电磁涡轮", n: 1 }
       ],
       t: 1,
-      chanliang: 3,
       p: 1
     }
   ],
@@ -1558,13 +1560,12 @@ export default {
         { name: "石墨烯", n: 1 }
       ],
       t: 1,
-      chanliang: 3,
       p: 1
     }
   ],
   四向分流器: [
     {
-      s: [{ name: "四向分流器", n: 1 }],
+      s: [{ name: "四向分流器" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1577,7 +1578,7 @@ export default {
   ],
   自动集装机: [
     {
-      s: [{ name: "自动集装机", n: 1 }],
+      s: [{ name: "自动集装机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1591,21 +1592,21 @@ export default {
   ],
   流速检测器: [
     {
-      s: [{name: "流速检测器", n: 1 } ],
+      s: [{ name: "流速检测器" }],
       group: "建筑",
       m: "制作台",
       q: [
-        {name: "铁块", n: 3 },
-        {name: "齿轮", n: 2 },
-        {name: "玻璃", n: 1 },
-        {name: "电路板", n: 2 }
+        { name: "铁块", n: 3 },
+        { name: "齿轮", n: 2 },
+        { name: "玻璃", n: 1 },
+        { name: "电路板", n: 2 }
       ],
       t: 2
     }
   ],
   喷涂机: [
     {
-      s: [{ name: "喷涂机", n: 1 }],
+      s: [{ name: "喷涂机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1619,7 +1620,7 @@ export default {
   ],
   小型储物仓: [
     {
-      s: [{ name: "小型储物仓", n: 1 }],
+      s: [{ name: "小型储物仓" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1631,7 +1632,7 @@ export default {
   ],
   大型储物仓: [
     {
-      s: [{ name: "大型储物仓", n: 1 }],
+      s: [{ name: "大型储物仓" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1643,7 +1644,7 @@ export default {
   ],
   储液灌: [
     {
-      s: [{ name: "储液灌", n: 1 }],
+      s: [{ name: "储液灌" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1656,7 +1657,7 @@ export default {
   ],
   物流配送器: [
     {
-      s: [{ name: "物流配送器", n: 1 }],
+      s: [{ name: "物流配送器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1669,7 +1670,7 @@ export default {
   ],
   行星内物流运输站: [
     {
-      s: [{ name: "行星内物流运输站", n: 1 }],
+      s: [{ name: "行星内物流运输站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1683,7 +1684,7 @@ export default {
   ],
   星际物流运输站: [
     {
-      s: [{ name: "星际物流运输站", n: 1 }],
+      s: [{ name: "星际物流运输站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1697,7 +1698,7 @@ export default {
   ],
   轨道采集器: [
     {
-      s: [{ name: "轨道采集器", n: 1 }],
+      s: [{ name: "轨道采集器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1733,7 +1734,6 @@ export default {
         { name: "电动机", n: 1 }
       ],
       t: 1,
-      chanliang: 2,
       p: 1
     }
   ],
@@ -1747,13 +1747,12 @@ export default {
         { name: "电磁涡轮", n: 1 }
       ],
       t: 1,
-      chanliang: 2,
       p: 1
     }
   ],
   采矿机: [
     {
-      s: [{ name: "采矿机", n: 1 }],
+      s: [{ name: "采矿机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1767,7 +1766,7 @@ export default {
   ],
   大型采矿机: [
     {
-      s: [{ name: "大型采矿机", n: 1 }],
+      s: [{ name: "大型采矿机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1782,7 +1781,7 @@ export default {
   ],
   抽水机: [
     {
-      s: [{ name: "抽水机", n: 1 }],
+      s: [{ name: "抽水机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1796,7 +1795,7 @@ export default {
   ],
   原油萃取站: [
     {
-      s: [{ name: "原油萃取站", n: 1 }],
+      s: [{ name: "原油萃取站" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1810,7 +1809,7 @@ export default {
   ],
   原油精炼厂: [
     {
-      s: [{ name: "原油精炼厂", n: 1 }],
+      s: [{ name: "原油精炼厂" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -1824,7 +1823,7 @@ export default {
   ],
   分馏塔: [
     {
-      s: [{ name: "分馏塔", n: 1 }],
+      s: [{ name: "分馏塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1838,7 +1837,7 @@ export default {
   ],
   化工厂: [
     {
-      s: [{ name: "化工厂", n: 1 }],
+      s: [{ name: "化工厂" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1852,7 +1851,7 @@ export default {
   ],
   量子化工厂: [
     {
-      s: [{ name: "量子化工厂", n: 1 }],
+      s: [{ name: "量子化工厂" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1867,7 +1866,7 @@ export default {
   ],
   微型微型粒子对撞机: [
     {
-      s: [{ name: "微型微型粒子对撞机", n: 1 }],
+      s: [{ name: "微型微型粒子对撞机" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1883,7 +1882,7 @@ export default {
 
   电弧熔炉: [
     {
-      s: [{ name: "电弧熔炉", n: 1 }],
+      s: [{ name: "电弧熔炉" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1897,7 +1896,7 @@ export default {
   ],
   位面熔炉: [
     {
-      s: [{ name: "位面熔炉", n: 1 }],
+      s: [{ name: "位面熔炉" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1912,7 +1911,7 @@ export default {
   ],
   负熵熔炉: [
     {
-      s: [{ name: "负熵熔炉", n: 1 }],
+      s: [{ name: "负熵熔炉" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1927,7 +1926,7 @@ export default {
   ],
   "制作台Mk.Ⅰ": [
     {
-      s: [{ name: "制作台Mk.Ⅰ", n: 1 }],
+      s: [{ name: "制作台Mk.Ⅰ" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1940,7 +1939,7 @@ export default {
   ],
   "制作台Mk.Ⅱ": [
     {
-      s: [{ name: "制作台Mk.Ⅱ", n: 1 }],
+      s: [{ name: "制作台Mk.Ⅱ" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1954,7 +1953,7 @@ export default {
   ],
   "制作台Mk.Ⅲ": [
     {
-      s: [{ name: "制作台Mk.Ⅲ", n: 1 }],
+      s: [{ name: "制作台Mk.Ⅲ" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1968,7 +1967,7 @@ export default {
   ],
   重组式制作台: [
     {
-      s: [{ name: "重组式制作台", n: 1 }],
+      s: [{ name: "重组式制作台" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1983,7 +1982,7 @@ export default {
   ],
   矩阵研究站: [
     {
-      s: [{ name: "矩阵研究站", n: 1 }],
+      s: [{ name: "矩阵研究站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1997,7 +1996,7 @@ export default {
   ],
   自演化研究站: [
     {
-      s: [{ name: "自演化研究站", n: 1 }],
+      s: [{ name: "自演化研究站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2012,7 +2011,7 @@ export default {
   ],
   电磁轨道弹射器: [
     {
-      s: [{ name: "电磁轨道弹射器", n: 1 }],
+      s: [{ name: "电磁轨道弹射器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2026,7 +2025,7 @@ export default {
   ],
   垂直发射井: [
     {
-      s: [{ name: "垂直发射井", n: 1 }],
+      s: [{ name: "垂直发射井" }],
       group: "组件",
       m: "制作台",
       q: [
@@ -2041,7 +2040,7 @@ export default {
 
   高斯机枪塔: [
     {
-      s: [{ name: "高斯机枪塔", n: 1 }],
+      s: [{ name: "高斯机枪塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2055,7 +2054,7 @@ export default {
   ],
   导弹防御塔: [
     {
-      s: [{ name: "导弹防御塔", n: 1 }],
+      s: [{ name: "导弹防御塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2069,7 +2068,7 @@ export default {
   ],
   聚爆加农炮: [
     {
-      s: [{ name: "聚爆加农炮", n: 1 }],
+      s: [{ name: "聚爆加农炮" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2083,7 +2082,7 @@ export default {
   ],
   高频激光塔: [
     {
-      s: [{ name: "高频激光塔", n: 1 }],
+      s: [{ name: "高频激光塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2097,7 +2096,7 @@ export default {
   ],
   磁化电浆炮: [
     {
-      s: [{ name: "磁化电浆炮", n: 1 }],
+      s: [{ name: "磁化电浆炮" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2112,7 +2111,7 @@ export default {
   ],
   战场分析基站: [
     {
-      s: [{ name: "战场分析基站", n: 1 }],
+      s: [{ name: "战场分析基站" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2126,7 +2125,7 @@ export default {
   ],
   信号塔: [
     {
-      s: [{ name: "信号塔", n: 1 }],
+      s: [{ name: "信号塔" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -2140,7 +2139,7 @@ export default {
   ],
   行星护盾发生器: [
     {
-      s: [{ name: "行星护盾发生器", n: 1 }],
+      s: [{ name: "行星护盾发生器" }],
       group: "建筑",
       m: "制作台",
       q: [

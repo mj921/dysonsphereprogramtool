@@ -10,149 +10,124 @@
         <div
           slot="reference"
           class="tree-block"
-          :class="{
-            'has-children':
-              data.productMaterial && data.productMaterial.length > 1
-          }"
+          :class="{ 'has-children': data.formulaMaterial.length > 1 }"
         >
           <div :class="`sprayed-${data.sprayedMode}`">
-            <img :src="imgs[data.productName]" /> {{ data.productName }} x
-            {{ data.productNum | numFmt }}
+            <img :src="imgs[data.productName]" />
+            {{ data.productName }} x {{ data.productNum | numFmt }}
           </div>
-          <div>
-            <img
-              :src="
-                data.factoryName.slice(0, 2) === '矿脉'
-                  ? imgs[data.productName]
-                  : imgs[data.factoryImg]
-              "
-            />
-            {{ data.factoryName }} x {{ data.factoryNum | numFmt }}
-          </div>
-          <div
-            v-if="
-              data.factoryName != '黑雾残骸' && data.productName != '戴森球能量'
-            "
-          >
-            <img v-if="imgs[data.beltName]" :src="imgs[data.beltName]" />{{
-              data.beltName
-            }}
-            x
-            {{ data.beltNum | numFmt }}
-          </div>
-          <div v-if="data.sprayedMode != 'none'">
-            <img :src="imgs[data.sprayedData.name]" />
-            <template v-if="data.sprayedMode == 'speedup'"
-              >加速{{ data.sprayedData.speedup * 100 - 100 }}%</template
-            >
-            <template v-else
-              >增产{{ data.sprayedData.extra * 100 - 100 }}%</template
-            >
-            x {{ data.sprayedNum | numFmt }}
-          </div>
+          <template v-if="simple">
+            <div>
+              <img :src="imgs[data.factoryName.replace('矿脉', '')]" />
+              {{ data.factoryFullname }} x {{ data.factoryNum | numFmt }}
+            </div>
+            <div v-if="data.beltNum">
+              <img v-if="imgs[data.beltName]" :src="imgs[data.beltName]" />
+              {{ data.beltName }} x {{ data.beltNum | numFmt }}
+            </div>
+            <div v-if="data.sprayedMode != 'none'">
+              <img :src="imgs[data.sprayedData.name]" />
+              <template v-if="data.sprayedMode == 'speedup'">
+                加速{{ data.sprayedData.speedup * 100 - 100 }}%
+              </template>
+              <template v-else>
+                增产{{ data.sprayedData.extra * 100 - 100 }}%
+              </template>
+              x {{ data.sprayedNum | numFmt }}
+            </div>
+            <div v-for="(num, name) in data.extraProduct" :key="'s' + name">
+              <img :src="imgs[name]" />
+              {{ name }} x {{ num | numFmt }}
+            </div>
+            <div v-for="(num, name) in data.extraMaterial" :key="'q' + name">
+              <img :src="imgs[name]" />
+              {{ name }} x {{ -num | numFmt }}
+            </div>
+          </template>
         </div>
         <div>
-          <dl class="product-options">
-            <span v-if="data.productIndex < 0" @click.stop="changeOff(data)">
-              启用
-            </span>
+          <dl v-if="data.sprayedType != -1" class="sprayed-options">
             <span
-              v-else-if="data.productMaterial.length > 0"
-              @click.stop="changeOff(data)"
+              v-for="(item, i) in getProductList(data)"
+              :key="item"
+              @click.stop="changeSprayed(data, i)"
             >
-              禁用
+              {{ item }}
             </span>
-            <template v-if="data.sprayedType != -1">
-              <span
-                v-for="(item, i) in getProductList(data)"
-                :key="item"
-                @click.stop="changeSprayed(data, i)"
-              >
-                {{ item }}
-              </span>
-            </template>
           </dl>
           <dl
-            class="tree-pf"
-            :class="{
-              curr: data.productIndex === i || data.productIndex === ~i
-            }"
-            v-for="(item, i) in data.productFormula"
+            v-for="(item, i) in data.formulaAll"
             :key="i"
+            class="tree-pf"
+            :class="{ curr: data.formulaIndex === i }"
             @click.stop="changeFormula(data, i)"
           >
-            <template
-              v-if="
-                [
-                  '采矿机',
-                  '大型采矿机',
-                  '轨道采集器',
-                  '抽水机',
-                  '原油萃取站',
-                  '射线接收站'
-                ].indexOf(item.m) > -1
-              "
-            >
-              <img :src="imgs[item.m]" />
-              <img
-                v-if="item.m == '射线接收站' && i == 1"
-                :src="imgs['引力透镜']"
-              />
-              <div class="not-time" v-if="item.s && item.s.length > 0">
-                <div>→</div>
-              </div>
-              <div v-for="(jtem, j) in item.s" :key="'s' + j">
-                <img :src="imgs[jtem.name]" />
-              </div>
-            </template>
-            <template v-else-if="item.m === '矿脉' || item.m === '黑雾残骸'">
-              <img :src="imgs[data.productName]" />
-              <div class="not-time" v-if="item.s && item.s.length > 0">
-                <div>→</div>
-              </div>
-              <div v-for="(jtem, j) in item.s" :key="'s' + j">
-                <img :src="imgs[jtem.name]" />
-              </div>
-            </template>
-            <template v-else>
+            <template v-if="item.q.length > 0">
               <div v-for="(jtem, j) in item.q" :key="'q' + j">
-                <img :src="imgs[jtem.name]" /><span>{{ jtem.n }}</span>
+                <img v-if="item.m == '射线接收站'" :src="imgs['射线接收站']" />
+                <template v-if="data.formulaIndex === i">
+                  <img
+                    :src="imgs[jtem.name]"
+                    :class="{ drak: !data.formulaExec[j] }"
+                    @click="changeState(data, jtem.name)"
+                  /><span>{{ jtem.n }}</span>
+                </template>
+                <template v-else>
+                  <img :src="imgs[jtem.name]" />
+                  <span>{{ jtem.n }}</span>
+                </template>
               </div>
-              <div
-                class="time"
-                v-if="
-                  item.q && item.q.length > 0 && item.s && item.s.length > 0
-                "
-              >
+              <div class="time">
                 <div class="time-num">{{ item.t }} s</div>
                 <div>→</div>
               </div>
               <div v-for="(jtem, j) in item.s" :key="'s' + j">
-                <img :src="imgs[jtem.name]" /><span>{{ jtem.n || 1 }}</span>
+                <img
+                  v-if="data.formulaIndex == i && j == 0 && item.q.length > 0"
+                  :src="imgs[jtem.name]"
+                  @click="changeStateAll(data)"
+                />
+                <img v-else :src="imgs[jtem.name]" />
+                <span>{{ jtem.n }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <div v-if="item.m === '矿脉' || item.m === '黑雾残骸'">
+                <img :src="imgs[data.productName]" />
+              </div>
+              <div v-else>
+                <img :src="imgs[item.m]" />
+              </div>
+              <div class="time">
+                <div class="time-num">{{ item.t }} s</div>
+                <div>→</div>
+              </div>
+              <div v-for="(jtem, j) in item.s" :key="'s' + j">
+                <img :src="imgs[jtem.name]" />
+                <span v-if="/^.巨/.test(item.m)">
+                  {{ data.factorys[`${item.m}_${jtem.name}`].speed | numFmt }}
+                </span>
+                <span v-else>{{ data.factorys[item.m].speed | numFmt }}</span>
               </div>
             </template>
           </dl>
         </div>
       </el-popover>
     </div>
-    <div
-      class="tree-yl"
-      v-if="data.productMaterial && data.productMaterial.length > 0"
-    >
+    <div class="tree-yl" v-if="data.formulaMaterial.length > 0">
       <div
         class="tree-children"
-        :class="{ 'not-line': data.productMaterial.length <= 1 }"
-        v-for="(item, i) in data.productMaterial"
+        :class="{ 'not-line': data.formulaMaterial.length <= 1 }"
+        v-for="(item, i) in data.formulaMaterial"
         :key="i"
       >
-        <tree :data="item" :vertical="vertical" />
+        <tree :data="item" :vertical="vertical" :simple="simple" />
       </div>
     </div>
   </div>
 </template>
-
 <script>
-import productAll from "../data/data";
+import imgs from "../data/imgs";
 import { factorydefault, loadConfig } from "../data/sb";
 export default {
   name: "Tree",
@@ -161,9 +136,13 @@ export default {
     vertical: {
       type: Boolean,
       default: false
+    },
+    simple: {
+      type: Boolean,
+      default: false
     }
   },
-  inject: ["createPf"],
+  inject: ["productUpdate"],
   filters: {
     numFmt(val) {
       return val
@@ -174,7 +153,7 @@ export default {
   },
   data() {
     return {
-      imgs: productAll.imgs,
+      imgs: imgs,
       visible: false
     };
   },
@@ -192,48 +171,65 @@ export default {
         `增产${data.sprayedData.extra * 100 - 100}%`
       ];
     },
-    changeOff(data) {
-      this.changeData(
-        data.parent,
-        data.productName,
-        factorydefault.storageformula,
-        ~data.productIndex
-      );
+    changeState(data, item) {
+      this.changeData(`${data.parent}-${data.productName}`, config => {
+        const pos = config.select.indexOf(item);
+        if (pos == -1) {
+          config.select.push(item);
+        } else {
+          config.select.splice(pos, 1);
+        }
+      });
+    },
+    changeStateAll(data) {
+      this.changeData(`${data.parent}-${data.productName}`, config => {
+        if (config.select.length == 0) {
+          config.select = data.formulaAll[data.formulaIndex].q.map(
+            item => item.name
+          );
+        } else {
+          config.select = [];
+        }
+      });
     },
     changeSprayed(data, i) {
       const mode = ["none", "speedup", "extra"];
       if (data.sprayedMode != mode[i]) {
         this.changeData(
-          data.parent,
-          data.productName,
-          factorydefault.storagesprayed,
-          mode[i]
+          `${data.parent}-${data.productName}`,
+          config => (config.sprayed = mode[i])
         );
       }
     },
     changeFormula(data, i) {
-      if (data.productIndex != i) {
+      if (data.formulaIndex != i) {
         this.changeData(
-          data.parent,
-          data.productName,
-          factorydefault.storageformula,
-          i
+          `${data.parent}-${data.productName}`,
+          config => (config.formula = i)
         );
       }
     },
-    changeData(parent, name, key, val) {
-      let config = loadConfig(key, {});
-      if (config[parent] && typeof config[parent] === "object") {
-        config[parent][name] = val;
-      } else {
-        config[parent] = {
-          [name]: val
-        };
+    changeData(key, fn) {
+      const config = loadConfig(factorydefault.storageproduct, {});
+      if (!config[key]) {
+        config[key] = { formula: 0, sprayed: "", select: [] };
       }
 
-      localStorage.setItem(key, JSON.stringify(config));
+      fn(config[key]);
+      if (
+        config[key].formula == 0 &&
+        config[key].sprayed == "" &&
+        config[key].select.length == 0
+      ) {
+        delete config[key];
+      }
+
+      localStorage.setItem(
+        factorydefault.storageproduct,
+        JSON.stringify(config)
+      );
       this.visible = false;
-      this.createPf(true);
+      this.productUpdate();
     }
   }
 };
@@ -385,6 +381,9 @@ export default {
     display: flex;
     &.curr {
       background-color: rgba($color: #ffffff, $alpha: 0.3);
+      .drak {
+        filter: brightness(33%);
+      }
     }
     .time {
       margin: 0 5px;
@@ -394,9 +393,6 @@ export default {
         font-size: 12px;
         line-height: 12px;
       }
-      &.not-time {
-        line-height: 40px;
-      }
     }
     span {
       vertical-align: bottom;
@@ -404,9 +400,8 @@ export default {
       line-height: 1em;
     }
   }
-  .product-options {
-    margin-top: 0;
-    margin-bottom: 0;
+  .sprayed-options {
+    margin: 0;
     span {
       display: inline-block;
       margin-right: 8px;
@@ -417,7 +412,6 @@ export default {
   img {
     width: 40px;
     height: 40px;
-    vertical-align: top;
   }
   &[x-placement^="right"] {
     .popper__arrow {
