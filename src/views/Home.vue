@@ -1,96 +1,116 @@
 <template>
-  <div class="home" :class="{ vertical }">
-    <div class="form">
-      <div class="select-block">
-        <el-select v-model="currWp" filterable placeholder="请选择产物">
+  <div id="app">
+    <div class="dsp-form">
+      <div class="select-block form-block">
+        <el-select
+          v-model="currentProduct"
+          class="dsp-form-list"
+          filterable
+          placeholder="请选择产物"
+          :popper-append-to-body="false"
+        >
           <el-option-group
-            v-for="group in list"
-            :key="group.name"
-            :label="group.name"
+            v-for="(val, key) in productAll.list"
+            :key="key"
+            :label="val"
           >
+            <template v-if="key != 'fule' && key != 'ammo'">
+              <el-option
+                v-for="item in productAll[key]"
+                :key="item"
+                :value="item"
+              >
+                <img v-if="imgs[item]" class="select-img" :src="imgs[item]" />
+                {{ item }}
+              </el-option>
+            </template>
+          </el-option-group>
+          <el-option-group key="resources" label="资源">
             <el-option
-              v-for="item in group.options"
-              :key="item.value"
-              :value="item.value"
+              v-for="item in productAll['resources']"
+              :key="item"
+              :value="item"
             >
-              <img class="select-img" :src="imgs[item.label]" />{{ item.label }}
+              <img v-if="imgs[item]" class="select-img" :src="imgs[item]" />
+              {{ item }}
             </el-option>
           </el-option-group>
         </el-select>
         <span>或</span>
         <el-popover
-          style="margin-right: 10px;"
-          placement="bottom"
-          trigger="click"
+          v-model="visibleselect"
+          class="dsp-form-map"
           popper-class="panel-popper"
-          v-model="imgSelectVisible"
+          trigger="click"
+          content="viewport"
+          :placement="width > 800 ? 'top' : 'left'"
+          :append-to-body="false"
         >
           <div
             slot="reference"
             class="tree-block"
             :class="{
-              'has-children': data['需求产物'] && data['需求产物'].length > 1
+              'has-children':
+                data.formulaMaterial && data.formulaMaterial.length > 1
             }"
           >
             <el-button type="primary" size="small">选择产物(图片)</el-button>
           </div>
           <div class="select-tabs">
             <dl
+              v-for="(val, key) in itemname"
               class="select-tab"
-              :class="{ curr: selectTab === '组件' }"
-              @click="selectTab = '组件'"
+              :class="{ curr: itemtab === key }"
+              :key="key"
+              @click="itemtab = key"
             >
-              <img src="../assets/component-icon.png" alt="" />
-              <span>组件</span>
+              <img
+                v-if="key == 'items'"
+                src="../assets/component-icon.png"
+                alt=""
+              />
+              <img v-else src="../assets/factory-icon.png" alt="" />
+              <span>{{ val }}</span>
             </dl>
-            <dl
-              class="select-tab"
-              :class="{ curr: selectTab === '建筑' }"
-              @click="selectTab = '建筑'"
-            >
-              <img src="../assets/factory-icon.png" alt="" />
-              <span>建筑</span>
+            <dl>
+              <div class="select-filter">
+                <el-checkbox
+                  v-for="(name, key) in productAll.list"
+                  :key="key"
+                  v-model="itemactive[key]"
+                  @change="changeFilter"
+                  >{{ name }}</el-checkbox
+                >
+              </div>
             </dl>
           </div>
-          <div class="panel" v-show="selectTab === '组件'">
+          <div
+            v-for="(_, item) in itemname"
+            v-show="itemtab === item"
+            class="panel"
+            :key="item"
+          >
             <div class="panel-wrapper">
-              <dl v-for="i in 7" :key="'row-' + i">
+              <dl v-for="i in 7" :key="`${item}-row-${i}`">
                 <dd
                   :class="{
                     curr:
-                      wpMap['组件'][`${i}-${j}`] &&
-                      wpMap['组件'][`${i}-${j}`] === currWp
+                      itemmap[item][`${i}-${j}`] &&
+                      itemmap[item][`${i}-${j}`] === currentProduct
                   }"
-                  v-for="j in 12"
-                  :key="`col-${i}-${j}`"
-                  :title="wpMap['组件'][`${i}-${j}`]"
-                  @click="selectWp(wpMap['组件'][`${i}-${j}`])"
+                  v-for="j in 14"
+                  :key="`${item}-col-${i}-${j}`"
+                  :title="itemmap[item][`${i}-${j}`]"
+                  @click="productSelect(itemmap[item][`${i}-${j}`])"
                 >
                   <img
-                    v-if="wpMap['组件'][`${i}-${j}`]"
-                    :src="imgs[wpMap['组件'][`${i}-${j}`]]"
-                  />
-                </dd>
-              </dl>
-            </div>
-          </div>
-          <div class="panel" v-show="selectTab === '建筑'">
-            <div class="panel-wrapper">
-              <dl v-for="i in 7" :key="'row-' + i">
-                <dd
-                  :class="{
-                    curr:
-                      wpMap['建筑'][`${i}-${j}`] &&
-                      wpMap['建筑'][`${i}-${j}`] === currWp
-                  }"
-                  v-for="j in 12"
-                  :key="`col-${i}-${j}`"
-                  :title="wpMap['建筑'][`${i}-${j}`]"
-                  @click="selectWp(wpMap['建筑'][`${i}-${j}`])"
-                >
-                  <img
-                    v-if="wpMap['建筑'][`${i}-${j}`]"
-                    :src="imgs[wpMap['建筑'][`${i}-${j}`]]"
+                    v-if="itemmap[item][`${i}-${j}`]"
+                    :class="{
+                      drak:
+                        itemfilter.length > 0 &&
+                        itemfilter.indexOf(itemmap[item][`${i}-${j}`]) == -1
+                    }"
+                    :src="imgs[itemmap[item][`${i}-${j}`]]"
                   />
                 </dd>
               </dl>
@@ -98,167 +118,120 @@
           </div>
         </el-popover>
       </div>
-      <el-radio-group v-model="type" @change="typeChange">
-        <el-radio label="产量"></el-radio>
-        <el-radio label="设备"></el-radio>
-        <el-radio label="传送带"></el-radio>
-      </el-radio-group>
-      <el-input
-        style="width: 120px;"
-        v-model="num"
-        :placeholder="type === '产量' ? '每分钟产量' : '设备数'"
-        @blur="inputBlur"
-      ></el-input>
-      <el-checkbox v-model="vertical">是否水平</el-checkbox>
+      <div class="dsp-form-type form-block">
+        <el-radio-group
+          v-model="configtype"
+          @change="changeType"
+          class="form-block"
+        >
+          <el-radio label="产量"></el-radio>
+          <el-radio label="设备"></el-radio>
+          <el-radio label="传送带"></el-radio>
+        </el-radio-group>
+        <el-input
+          v-model="confignum"
+          :placeholder="configtype === '产量' ? '每分钟产量' : '设备数'"
+          @blur="changeNum"
+        >
+          <template slot="append">/ min</template>
+        </el-input>
+      </div>
+      <div class="form-block">
+        <el-checkbox v-model="configvertical">水平展示</el-checkbox>
+        <el-checkbox v-model="configsimple">简化展示</el-checkbox>
+        <el-checkbox v-model="configmaterial" @change="productUpdate">
+          隐藏资源
+        </el-checkbox>
+      </div>
     </div>
-    <el-button @click="visible = true" style="margin-left: 10px;">
-      查看总览
-    </el-button>
-    <el-button @click="configVisible = true" style="margin-left: 10px;">
-      参数配置
-    </el-button>
-    <el-button @click="clearCache" style="margin-left: 10px;">
-      重置默认值
-    </el-button>
-    (tip:传送带按产物计算)
-    <br />
+    <div class="dsp-menu">
+      <el-button @click="visibleoverview = true">查看总览</el-button>
+      <el-button @click="visibledescribe = true">查看说明</el-button>
+      <el-button @click="visibleconfig = true">参数配置</el-button>
+      <el-button @click="clearCache">重置默认值</el-button>
+    </div>
     <el-tabs
-      v-show="tabList.length > 0"
-      :value="currWp"
+      v-show="productList.length > 0"
+      :value="currentProduct"
       tab-position="top"
       closable
-      @tab-remove="removeTab"
-      @tab-click="tabChange"
+      @tab-remove="productRemove"
+      @tab-click="productChange"
+      class="dsp-procucts"
     >
       <el-tab-pane
-        v-for="item in tabList"
+        v-for="item in productList"
         :key="item"
         :label="item"
         :name="item"
       >
-        <el-button @click="tabStaticVisible = true" style="margin-left: 10px;">
+        <el-button @click="visiblecurrent = true" style="margin: 0 10px;">
           查看当前产物总览
         </el-button>
-        <tree :data="tabMap[item].data" :vertical="vertical" />
+        <dsp-products
+          :data="productMapping[item].data"
+          :vertical="configvertical"
+          :simple="!configsimple"
+        />
       </el-tab-pane>
     </el-tabs>
-    <show-static
-      v-if="tabMap[currWp]"
-      :visible.sync="tabStaticVisible"
-      :yl="tabMap[currWp].yl"
-      :sb="tabMap[currWp].sb"
+    <dsp-describe :visible.sync="visibledescribe" />
+    <dsp-setting :visible.sync="visibleconfig" :setting="factorysetting" />
+    <dsp-overview
+      v-if="productMapping[currentProduct]"
+      :visible.sync="visiblecurrent"
+      :overview="productMapping[currentProduct].overview"
+      :factory="factorylist"
+      :dissipation="factorysetting['能量散失']"
       :imgs="imgs"
-      :total-power="tabMap[currWp].totalPower"
     />
-    <show-static
-      :visible.sync="visible"
-      :yl="yl"
-      :sb="sb"
+    <dsp-overview
+      :visible.sync="visibleoverview"
+      :overview="overview"
+      :factory="factorylist"
+      :dissipation="factorysetting['能量散失']"
       :imgs="imgs"
-      :total-power="totalPower"
     />
-    <el-dialog title="参数配置" :visible.sync="configVisible" width="800px">
-      <el-form label-width="140px" inline size="mini">
-        <el-form-item
-          v-for="item in ['制作台', '冶炼设备']"
-          :key="item"
-          :label="item"
-        >
-          <el-select
-            v-model="sbConfig[item]"
-            filterable
-            :placeholder="`请选择${item}`"
-          >
-            <el-option
-              v-for="(jtem, i) in sbMap[item]"
-              :key="i"
-              :label="jtem.name"
-              :value="i"
-            >
-              <img class="select-img" :src="imgs[jtem.name]" />{{ jtem.name }}
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item
-          v-for="item in [
-            '原油萃取站',
-            '轨道采集器_氢',
-            '轨道采集器_重氢',
-            '轨道采集器_可燃冰',
-            '抽水机',
-            '采矿机',
-            '矿脉'
-          ]"
-          :key="item"
-          :label="item"
-        >
-          <el-input v-model="sbConfig[item]" @input="iptHandle(item)">
-            <template slot="append">/ s</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="传送带">
-          <el-select
-            v-model="sbConfig['传送带']"
-            filterable
-            placeholder="请选择传送带"
-          >
-            <el-option
-              v-for="(item, i) in sbMap['传送带']"
-              :key="i"
-              :label="item.name"
-              :value="i"
-            >
-              <img
-                v-if="imgs[item.name]"
-                class="select-img"
-                :src="imgs[item.name]"
-              />{{ item.name }}
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="传送带运力" v-if="sbConfig['传送带'] === 3">
-          <el-input
-            v-model="sbConfig['自定义传送带']"
-            @input="iptHandle('自定义传送带')"
-          >
-            <template slot="append">/ s</template>
-          </el-input>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button @click="save">保存</el-button>
-        <el-button @click="cancel">关闭</el-button>
-      </span>
-    </el-dialog>
   </div>
 </template>
-
 <script>
-import pf from "../data/pf1";
-import { getSbInfo, defSb, sbMap } from "../data/sb";
-import wp from "../data/data";
-import Tree from "../components/tree";
-import ShowStatic from "../components/showStatic";
+import productAll from "../data/data";
+import { formulaAll, formulaInit } from "../data/pf1";
+import {
+  factorydefault,
+  factoryparams,
+  loadConfig,
+  loadFactoryList
+} from "../data/sb";
+import imgs from "../data/imgs";
+import dspDescribe from "../components/dspDescribe";
+import dspOverview from "../components/showStatic";
+import dspProducts from "../components/tree";
+import dspSetting from "../components/dspSetting";
 
 export default {
   name: "Home",
   components: {
-    Tree,
-    ShowStatic
+    dspDescribe,
+    dspOverview,
+    dspProducts,
+    dspSetting
   },
   data() {
-    const list = [];
-    const imgs = {};
-    const wpMap = {};
-    for (let key in wp) {
-      wpMap[key] = {};
-      list.push({
-        name: key,
-        options: wp[key].map(item => {
-          const arr = item.name.split("-");
+    console.clear();
+    console.log("app init");
+    formulaInit();
+    const itemname = { items: "组件", buildings: "建筑" };
+    const itemlist = [];
+    const itemmap = {};
+    for (let key in itemname) {
+      itemmap[key] = {};
+      itemlist.push({
+        name: itemname[key],
+        options: productAll[key].map(i => {
+          const arr = i.split("-");
           const name = arr[arr.length - 1];
-          imgs[name] = "data:image/png;base64," + item.value;
-          wpMap[key][arr.slice(0, 2).join("-")] = name;
+          itemmap[key][arr.slice(0, 2).join("-")] = name;
           return {
             value: name,
             label: name
@@ -266,83 +239,81 @@ export default {
         })
       });
     }
-    const sbConfigStr = localStorage.getItem("sbConfig");
-    let sbConfig = defSb;
-    if (sbConfigStr) {
-      try {
-        sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
-      } catch (e) {
-        console.log(e);
-      }
-    }
+
     return {
-      list,
-      wp,
-      wpMap,
-      imgs,
-      currWp: "",
       data: {},
-      vertical: false,
-      type: "产量",
-      num: 60,
-      visible: false,
-      configVisible: false,
-      sbConfig,
-      sbMap,
-      selectTab: "组件",
-      imgSelectVisible: false,
-      tabList: [],
-      tabMap: {},
-      tabStaticVisible: false
+      imgs: imgs,
+      productAll: productAll,
+      currentProduct: "",
+      productList: [],
+      productMapping: {},
+      itemtab: "items",
+      itemname,
+      itemmap,
+      itemlist,
+      itemactive: {},
+      itemfilter: [],
+      itemresources: productAll.resources,
+      configtype: "产量",
+      confignum: 60,
+      configvertical: false,
+      configsimple: false,
+      configmaterial: false,
+      factorysetting: loadConfig(factorydefault.storagesetting, {
+        ...factorydefault
+      }),
+      factoryparams,
+      factorylist: loadFactoryList().concat(productAll.resources),
+      visibleselect: false,
+      visibleoverview: false,
+      visibledescribe: false,
+      visibleconfig: false,
+      visiblecurrent: false
     };
   },
   watch: {
-    currWp(val) {
+    currentProduct(val) {
       if (val) {
-        this.createPf();
+        this.productUpdate();
       }
     }
   },
   computed: {
-    yl() {
-      const map = {};
-      this.tabList.forEach(name => {
-        this.tabMap[name].yl.forEach(item => {
-          if (!map[item.name]) {
-            map[item.name] = {
-              name: item.name,
-              sbName: item.sbName,
-              num: item.num,
-              sbNum: item.sbNum
+    width() {
+      return window.innerWidth;
+    },
+    overview() {
+      const data = {
+        power: 0,
+        products: {},
+        factorys: {},
+        materials: {}
+      };
+      this.productList.forEach(name => {
+        const item = this.productMapping[name].overview;
+        data.power += item.power;
+        Object.keys(item.products).map(key => {
+          if (!data.products[key]) {
+            data.products[key] = {
+              name: item.products[key].name,
+              num: 0,
+              factoryName: item.products[key].factoryName,
+              factoryFullname: item.products[key].factoryFullname,
+              factoryNum: 0
             };
-          } else {
-            map[item.name].num += item.num;
-            map[item.name].sbNum += item.sbNum;
           }
+          data.products[key].num += item.products[key].num;
+          data.products[key].factoryNum += item.products[key].factoryNum;
+        });
+        Object.keys(item.factorys).map(key => {
+          data.factorys[key] = (data.factorys[key] || 0) + item.factorys[key];
+        });
+        Object.keys(item.materials).map(key => {
+          data.materials[key] =
+            (data.materials[key] || 0) + item.materials[key];
         });
       });
-      return Object.keys(map).map(key => map[key]);
-    },
-    sb() {
-      const map = {};
-      this.tabList.forEach(name => {
-        this.tabMap[name].sb.forEach(item => {
-          if (!map[item.name]) {
-            map[item.name] = {
-              name: item.name,
-              num: item.num
-            };
-          } else {
-            map[item.name].num += item.num;
-          }
-        });
-      });
-      return Object.keys(map).map(key => map[key]);
-    },
-    totalPower() {
-      return this.tabList.reduce((power, name) => {
-        return this.tabMap[name].totalPower + power;
-      }, 0);
+      return data;
     }
   },
   filters: {
@@ -355,311 +326,432 @@ export default {
   },
   provide() {
     return {
-      createPf: this.createPf
+      settingsave: this.settingsave,
+      settingcancel: this.settingcancel,
+      productUpdate: this.productUpdate
     };
   },
   methods: {
-    tabChange(el) {
-      this.currWp = el.name;
-      this.num = this.tabMap[el.name].num;
-      this.type = this.tabMap[el.name].type;
-    },
-    removeTab(name) {
-      this.tabList.splice(this.tabList.indexOf(name), 1);
-      delete this.tabMap[name];
-      if (this.currWp === name) {
-        this.currWp = this.tabList.length > 0 ? this.tabList[0] : "";
-      }
-    },
-    selectWp(wp) {
-      if (!wp) return;
-      this.currWp = wp;
-      this.imgSelectVisible = false;
-    },
-    iptHandle(type) {
-      this.sbConfig[type] = this.sbConfig[type]
-        .replace(/[^.0-9]/g, "")
-        .replace(/^(\d*\.\d*)[^0-9]/, "$1")
-        .replace(/^\.+/, "");
-    },
-    cancel() {
-      const sbConfigStr = localStorage.getItem("sbConfig");
-      let sbConfig = defSb;
-      if (sbConfigStr) {
-        try {
-          sbConfig = { ...sbConfig, ...JSON.parse(sbConfigStr) };
-        } catch (e) {
-          console.log(e);
+    changeFilter() {
+      const list = [];
+      for (let key in this.itemactive) {
+        if (this.itemactive[key]) {
+          list.push(...this.productAll[key]);
         }
       }
-      this.sbConfig = sbConfig;
-      this.configVisible = false;
+      this.itemfilter = list;
     },
-    save() {
-      localStorage.setItem("sbConfig", JSON.stringify(this.sbConfig));
-      this.configVisible = false;
-      this.createPf();
-    },
-    inputBlur() {
-      this.createPf();
-    },
-    typeChange() {
-      this.createPf();
-    },
-    createPf(modifyPf = false) {
+    changeType() {
       if (
-        !modifyPf &&
-        this.tabMap[this.currWp] &&
-        this.tabMap[this.currWp].num === this.num &&
-        this.tabMap[this.currWp].type === this.type
+        this.currentProduct &&
+        this.productMapping[this.currentProduct].configtype !== this.configtype
       ) {
-        return;
+        this.productUpdate();
       }
-      this.num = +(this.num + "").replace(/[^0-9]/g, "");
-      if (!this.currWp || !pf[this.currWp]) return;
-      const configStr = localStorage.getItem("pfConfig");
-      let config = {};
-      if (configStr) {
-        try {
-          config = JSON.parse(configStr);
-        } catch (e) {
-          console.log(e);
-        }
+    },
+    changeNum() {
+      this.confignum = +(this.confignum + "").replace(/[^\\.0-9]/g, "");
+      if (this.confignum === 0) {
+        this.confignum = 60;
       }
-      const obj =
-        pf[this.currWp][(config.root && config.root[this.currWp]) || 0];
-      let num, csd;
-      switch (this.type) {
-        case "产量":
-          num = this.num;
-          break;
-        case "设备":
-          num =
-            ((this.num * obj.chanliang * 60) / obj.t) * getSbInfo(obj.m).speed;
-          break;
-        case "传送带":
-          csd = getSbInfo("传送带");
-          if (this.sbConfig["传送带"] === 3) {
-            csd = {
-              name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
-              speed: this.sbConfig["自定义传送带"]
-            };
-          }
-          num = this.num * 60 * csd.speed;
-          break;
-        default:
-          num = this.num;
+      if (
+        this.currentProduct &&
+        this.productMapping[this.currentProduct].confignum !== this.confignum
+      ) {
+        this.productUpdate();
       }
-      const data = this.getPf(this.currWp, num);
-      const [yl1, sb1, totalPower] = this.getYl(data);
-      const yl = Object.keys(yl1).map(key => ({
-        name: key,
-        ...yl1[key]
-      }));
-      const sb = Object.keys(sb1).map(key => ({
-        name: key,
-        num: sb1[key]
-      }));
-      if (!this.tabMap[this.currWp]) {
-        this.tabList.push(this.currWp);
+    },
+    settingcancel() {
+      this.factorysetting = loadConfig(factorydefault.storagesetting, {
+        ...factorydefault
+      });
+      this.visibleconfig = false;
+    },
+    settingsave() {
+      localStorage.setItem(
+        factorydefault.storagesetting,
+        JSON.stringify(this.factorysetting)
+      );
+      this.visibleconfig = false;
+      this.productUpdate();
+    },
+    productChange(el) {
+      this.currentProduct = el.name;
+      this.confignum = this.productMapping[el.name].confignum;
+      this.configtype = this.productMapping[el.name].configtype;
+      this.configmaterial = this.productMapping[el.name].configmaterial;
+    },
+    productRemove(name) {
+      this.productList.splice(this.productList.indexOf(name), 1);
+      delete this.productMapping[name];
+      if (this.currentProduct === name) {
+        this.currentProduct =
+          this.productList.length > 0
+            ? this.productList[this.productList.length - 1]
+            : "";
       }
-      this.$set(this.tabMap, this.currWp, {
+    },
+    productSelect(wp) {
+      if (!wp) return;
+      this.currentProduct = wp;
+      this.visibleselect = false;
+    },
+    productUpdate() {
+      if (!this.currentProduct || !formulaAll[this.currentProduct]) return;
+      if (!this.productMapping[this.currentProduct]) {
+        this.productList.push(this.currentProduct);
+      }
+      const data = this.getProductData(
+        "root",
+        this.currentProduct,
+        this.getProductNum(),
+        this.getProductConfig()
+      );
+
+      this.$set(this.productMapping, this.currentProduct, {
         data,
-        yl,
-        sb,
-        totalPower,
-        num: this.num,
-        type: this.type
+        overview: this.getOverview(data),
+        confignum: this.confignum,
+        configtype: this.configtype,
+        configmaterial: this.configmaterial
       });
       this.$forceUpdate();
     },
-    getPf(name, num = 60, parentName = "root") {
-      const configStr = localStorage.getItem("pfConfig");
-      let config = {};
-      if (configStr) {
-        try {
-          config = JSON.parse(configStr);
-        } catch (e) {
-          console.log(e);
-        }
+    getFactoryInfo(name) {
+      const config = this.factorysetting;
+      const obj = factoryparams[name];
+      if (
+        obj instanceof Array &&
+        (name !== "传送带" || config["传送带"] !== 3)
+      ) {
+        return obj[+config[name]];
       }
-      const parentConfig = config[parentName];
-      const currPf = JSON.parse(JSON.stringify(pf[name]));
-      const obj =
-        currPf[
-          (parentConfig &&
-            typeof parentConfig === "object" &&
-            parentConfig[name]) ||
-            0
-        ];
-      const q = obj.q;
-      const m = obj.m;
-      const sb = getSbInfo(m, name);
-      const speed = sb.speed;
-      const sbNum = ((num / 60 / speed) * obj.t) / (obj.chanliang || 1);
-      let csd = getSbInfo("传送带");
-      if (this.sbConfig["传送带"] === 3) {
-        csd = {
-          name: `自定义传送带(${this.sbConfig["自定义传送带"]}/s)`,
-          speed: this.sbConfig["自定义传送带"]
+
+      let speed = config[name];
+      if (name === "传送带") {
+        return {
+          name: `传送带(${config["自定义传送带"]}/s)`,
+          speed: config["自定义传送带"]
         };
+      } else if (name === "分馏塔") {
+        if (name === "分馏塔") {
+          speed = this.getFactoryInfo("传送带").speed;
+        }
+      } else {
+        if (name == "采矿机") {
+          speed *= 0.5;
+        } else if (/^.巨/.test(name)) {
+          speed *= config[obj.name] * 8;
+        }
+        speed *= config["采矿速度"] / 100;
       }
-      const csdNum = num / 60 / csd.speed;
-      // const r = num * obj.t
+
       return {
-        名称: name,
-        数量: num,
-        设备: sb.name,
-        设备数: sbNum,
-        需求产物: q
-          .filter(item => item.name !== name)
-          .map(item => {
-            return this.getPf(
-              item.name,
-              (item.n * num) / (obj.chanliang || 1),
-              name
-            );
-          }),
-        base: obj.base,
-        img: this.imgs[name],
-        sbImg: this.imgs[sb.baseName || sb.name],
-        pf: currPf,
-        csdNum,
-        csdName: csd.name,
-        csdImg: this.imgs[csd.name],
-        parentName,
-        power: sb.power * sbNum
+        name: obj.name,
+        power: obj.power,
+        fullname: `${obj.name}(${speed.toFixed(2)}/s)`,
+        speed
       };
     },
-    getYl(map, cache = {}, sb = {}, totalPower = { num: 0 }) {
-      if (cache[map["名称"]]) {
-        cache[map["名称"]].num += map["数量"];
-        cache[map["名称"]].sbNum += map["设备数"];
-      } else {
-        cache[map["名称"]] = {};
-        cache[map["名称"]].num = map["数量"];
-        cache[map["名称"]].sbName = map["设备"];
-        cache[map["名称"]].sbNum = map["设备数"];
+    getProductNum() {
+      if (this.configtype === "产量") {
+        return this.confignum;
       }
-      let sbName = map["设备"];
-      if (/^矿脉/.test(sbName)) {
-        sbName = map["名称"] + sbName;
+
+      const config = loadConfig(factorydefault.storageproduct, {})[
+        `root-${this.currentProduct}`
+      ] || { formula: 0, sprayed: "" };
+      const formula = formulaAll[this.currentProduct][config.formula];
+      const proliferator = this.getFactoryInfo("增产剂");
+      const factoryName = /^.巨/.test(formula.m)
+        ? `${formula.m}_${this.currentProduct}`
+        : formula.m;
+      let num = this.confignum * 60;
+      switch (this.configtype) {
+        case "设备":
+          if (config.sprayed === "extra") {
+            num *= proliferator.extra;
+          }
+          if (config.sprayed === "speedup") {
+            num *= proliferator.speedup;
+          }
+          return (
+            (num * formula.c * this.getFactoryInfo(factoryName).speed) /
+            formula.t
+          );
+        case "传送带":
+          return num * this.getFactoryInfo("传送带").speed;
+        default:
+          return this.confignum;
       }
-      if (sb[sbName]) {
-        sb[sbName] += map["设备数"];
-      } else {
-        sb[sbName] = map["设备数"];
-      }
-      totalPower.num += map.power;
-      map["需求产物"].forEach(item => {
-        this.getYl(item, cache, sb, totalPower);
-      });
-      return [cache, sb, totalPower.num];
     },
-    getBaseYl(map, cache = {}) {
-      if (map.base || !map["需求产物"] || map["需求产物"].length === 0) {
-        if (cache[map["名称"]]) {
-          cache[map["名称"]] += map["数量"];
-        } else {
-          cache[map["名称"]] = map["数量"];
+    getProductConfig() {
+      const factorys = Object.keys(this.factoryparams).reduce((data, name) => {
+        data[name] = this.getFactoryInfo(name);
+        return data;
+      }, {});
+
+      return {
+        setting: loadConfig(factorydefault.storageproduct, {}),
+        factorys,
+        belt: factorys["传送带"],
+        proliferator: factorys["增产剂"]
+      };
+    },
+    getProductData(parent, name, num = 60, config) {
+      const setting = config.setting[`${parent}-${name}`] || {
+        formula: 0,
+        sprayed: "",
+        select: []
+      };
+
+      const formulas = formulaAll[name];
+      const formulaIndex = setting.formula;
+      const formula = formulas[formulaIndex];
+      const formulaExec = formula.q.map(item => {
+        let state = this.hasMaterial(config, name, item.name);
+        if (setting.select.indexOf(item.name) != -1) {
+          state = !state;
         }
-      }
-      map["需求产物"].forEach(item => {
-        this.getBaseYl(item, cache);
+        return state;
       });
-      return cache;
+      const factory =
+        config.factorys[
+          /^.巨/.test(formula.m) ? `${formula.m}_${name}` : formula.m
+        ];
+
+      // 处理增产剂模式、增产剂数量、电力消耗、生产速度、生产次数
+      let outenergy = 1;
+      let outspeed = factory.speed;
+      let outNum = num / formula.c;
+      let sprayedMode = setting.sprayed;
+      let sprayedNum = 0;
+      if (config.proliferator.count == 0) {
+        sprayedMode = "none";
+      } else if (sprayedMode == "speedup" && formula.p != -1) {
+        outenergy = config.proliferator.energy;
+        outspeed *= config.proliferator.speedup;
+        sprayedNum = (outNum * formula.cq) / config.proliferator.count;
+      } else if (sprayedMode == "extra" && formula.p == undefined) {
+        outNum /= config.proliferator.extra;
+        sprayedNum = (outNum * formula.cq) / config.proliferator.count;
+      } else {
+        sprayedMode = "none";
+      }
+
+      const factoryNum = (outNum / 60 / outspeed) * formula.t;
+      const extra1 = (m, o) => {
+        if (o.rn !== 0) {
+          m[o.name] = (num / formula.c) * o.rn;
+        } else if (/^.巨/.test(formula.m)) {
+          m[o.name] =
+            factoryNum * 60 * config.factorys[`${formula.m}_${o.name}`].speed;
+        }
+        return m;
+      };
+      const extra2 = (m, o) => {
+        if (o.rn !== 0) {
+          m[o.name] = outNum * o.rn;
+        }
+        return m;
+      };
+      return {
+        parent,
+        factorys: config.factorys,
+        productName: name,
+        productNum: num,
+        extraProduct: formula.s.slice(1).reduce(extra1, {}),
+        // TOOD item.name != name
+        extraMaterial: formula.q
+          .filter((_, i) => !formulaExec[i])
+          .filter(item => item.name !== name)
+          .reduce(extra2, {}),
+        formulaIndex,
+        formulaAll: formulas,
+        formulaExec, // drak?
+        formulaMaterial: formula.q
+          .filter((_, i) => formulaExec[i])
+          .filter(item => item.rn !== 0)
+          .filter(item => item.name !== name)
+          .map(item =>
+            this.getProductData(name, item.name, item.rn * outNum, config)
+          ),
+        factoryName:
+          factory.name == "矿脉" ? name + factory.name : factory.name,
+        factoryFullname: factory.fullname || factory.name,
+        factoryNum,
+        beltName: config.belt.name,
+        beltNum: ((num / formula.c) * formula.cs) / 60 / config.belt.speed,
+        sprayedMode,
+        sprayedNum,
+        sprayedType: formula.p,
+        sprayedData: config.proliferator,
+        power: factory.power * factoryNum * outenergy
+      };
+    },
+    hasMaterial(config, parent, name) {
+      if (!this.configmaterial || this.itemresources.indexOf(name) == -1) {
+        return true;
+      } else if (name == "硅石" || name == "有机晶体") {
+        const setting = config.setting[`${parent}-${name}`] || { formula: 0 };
+        const formula = formulaAll[name][setting.formula];
+        return formula.q.length > 0;
+      }
+      return false;
+    },
+    getOverview(
+      data,
+      overview = { power: 0, products: {}, factorys: {}, materials: {} }
+    ) {
+      overview.power += data.power;
+
+      // 统计产物
+      const products = overview.products;
+      const productkey = `${data.productName}-${data.factoryName}`;
+      if (products[productkey]) {
+        products[productkey].num += data.productNum;
+        products[productkey].factoryNum += data.factoryNum;
+      } else {
+        products[productkey] = {
+          name: data.productName,
+          num: data.productNum,
+          factoryName: data.factoryName,
+          factoryFullname: data.factoryFullname,
+          factoryNum: data.factoryNum
+        };
+      }
+
+      // 统计工厂
+      const factorys = overview.factorys;
+      factorys[data.factoryName] =
+        (factorys[data.factoryName] || 0) + data.factoryNum;
+
+      const materials = overview.materials;
+      // 增产剂
+      if (data.sprayedNum > 0) {
+        materials[data.sprayedData.name] =
+          (materials[data.sprayedData.name] || 0) - data.sprayedNum;
+      }
+      // 额外产物
+      for (let name in data.extraProduct) {
+        materials[name] = (materials[name] || 0) + data.extraProduct[name];
+      }
+      // 额外原料
+      for (let name in data.extraMaterial) {
+        materials[name] = (materials[name] || 0) - data.extraMaterial[name];
+      }
+
+      data.formulaMaterial.forEach(item => this.getOverview(item, overview));
+      return overview;
     },
     clearCache() {
-      localStorage.removeItem("pfConfig");
-      localStorage.removeItem("sbConfig");
+      this.factorysetting = { ...factorydefault };
+      localStorage.removeItem(factorydefault.storagesetting);
+      localStorage.removeItem(factorydefault.storageproduct);
+
+      const oldversion = ["sbConfig", "pfConfig", "dsp-formula", "dsp-sprayed"];
+      oldversion.forEach(i => localStorage.removeItem(i));
     }
   }
 };
 </script>
-<style lang="scss" scoped>
-.home {
+<style type="text/css">
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
   background-color: #000;
-  min-height: 100vh;
-  width: 1920px;
-  min-width: 100vw;
   color: #f5c62a;
-  &.vertical {
-    width: 7000px;
-  }
+  white-space: nowrap;
 }
-.panel {
-  background-color: #1c3436;
-  .panel-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 768px;
-    background-color: rgba($color: #000000, $alpha: 0.3);
-    padding: 2px;
-    dl {
-      display: flex;
-      margin: 0;
-      dd {
-        width: 60px;
-        margin: 0;
-        background-color: #1c3436;
-        margin: 2px;
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        &.curr,
-        &:hover {
-          background-color: rgba($color: #ffffff, $alpha: 0.2);
-        }
-        img {
-          height: 40px;
-          width: 40px;
-          margin: 0;
-        }
-      }
-    }
-  }
+#app {
+  display: flex;
+  flex-direction: column;
 }
 img {
   width: 20px;
   height: 20px;
   vertical-align: top;
-  margin-right: 5px;
+  margin-right: 4px;
 }
 .select-img {
-  width: 20px;
-  height: 20px;
-  vertical-align: top;
-  margin-right: 5px;
 }
-.form {
-  padding: 10px;
+</style>
+<style lang="scss" scoped>
+$small-screen: 600px;
+.dsp-form {
+  padding: 8px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  width: 90vw;
-  min-width: 800px;
-  & > * {
-    margin-right: 3px;
-  }
-  .select-block {
+  flex-wrap: wrap;
+  align-items: center;
+  .form-block {
+    min-height: 32px;
+    margin: 2px 0;
     display: flex;
     align-items: center;
-    & > * {
-      margin-right: 5px;
+  }
+  .select-block {
+    > * {
+      margin-right: 4px;
+    }
+    .dsp-form-list :deep(.el-scrollbar__wrap) {
+      max-height: 500px;
+    }
+    .dsp-form-map :deep(.el-popover) {
+      background-color: #1c3436;
+    }
+  }
+  .dsp-form-type {
+    padding-left: 15%;
+    .el-input {
+      margin: 0 30px;
+      min-width: 120px;
+      max-width: 150px;
+    }
+    @media screen and (max-width: 1300px) {
+      padding-left: 0;
+    }
+    @media screen and (max-width: $small-screen) {
+      .el-radio {
+        margin-right: 4px;
+      }
+      .el-input {
+        margin: 0;
+      }
     }
   }
 }
+.dsp-menu > * {
+  margin-left: 10px;
+}
+.dsp-procucts {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  :deep(.el-tabs__content) {
+    height: 100%;
+  }
+  :deep(.el-tab-pane) {
+    height: 100%;
+    overflow: auto;
+  }
+}
+/* .dsp-form-map style */
 .select-tabs {
   display: flex;
   width: 154px;
   margin-bottom: 5px;
   .select-tab {
-    flex-grow: 1;
-    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex-grow: 1;
+    text-align: center;
     padding: 10px;
     margin: 0;
     margin-right: 5px;
@@ -678,10 +770,54 @@ img {
       color: #fff;
     }
   }
+  .select-filter {
+    display: flex;
+    flex-wrap: wrap;
+    width: 600px;
+    > label {
+      width: calc(20% - 30px);
+    }
+  }
 }
-</style>
-<style lang="scss">
-.el-popover.panel-popper {
+.panel {
   background-color: #1c3436;
+  .panel-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 756px;
+
+    background-color: rgba($color: #000000, $alpha: 0.3);
+    padding: 2px;
+    @media screen and (max-width: $small-screen) {
+      flex-direction00: row;
+    }
+    dl {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      dd {
+        width: 50px;
+        margin: 0;
+        background-color: #1c3436;
+        margin: 2px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        &.curr,
+        &:hover {
+          background-color: rgba($color: #ffffff, $alpha: 0.2);
+        }
+        img {
+          height: 40px;
+          width: 40px;
+          margin: 0;
+        }
+      }
+      .drak {
+        filter: brightness(50%);
+      }
+    }
+  }
 }
 </style>

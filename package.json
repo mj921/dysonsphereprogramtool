@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "build": "NODE_ENV=production vue-cli-service build",
     "build:github": "vue-cli-service build --mode=github",
     "build:gitee": "vue-cli-service build --mode=gitee",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "default-passive-events": "^2.0.0",
     "element-ui": "^2.15.1",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",

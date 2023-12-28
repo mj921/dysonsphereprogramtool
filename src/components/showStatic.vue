@@ -1,39 +1,58 @@
 <template>
-  <el-dialog
-    title="总览"
-    :visible.sync="_visible"
-    width="700px"
-    class="show-static"
-  >
-    <div>总耗电大约：{{ totalPower | numFmt }} M</div>
+  <el-dialog title="总览" :visible.sync="_visible" class="dsp-overview">
+    <div class="text">
+      总耗电大约：{{ overview.power | numFmt }} M
+      <span
+        v-if="overview.products['临界光子-射线接收站']"
+        title="实际接受戴森球发电量受到能量散失影响"
+      >
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 戴森球大约：{{
+          ((overview.products["临界光子-射线接收站"].num * 2000) /
+            (100 - dissipation))
+            | numFmt
+        }}
+        M
+      </span>
+      <div v-for="name in ['冰巨采集器', '气巨采集器']" :key="'warn' + name">
+        <span v-if="overview.factorys[name] > 40">
+          {{ name }} x
+          {{ overview.factorys[name] | numFmt }}
+          数量大于40，巨行星资源速度差异会影响采集速度计算准确性。
+        </span>
+      </div>
+    </div>
     <div class="all">
       <div>
-        <dl v-for="(item, i) in yl" :key="i">
+        <dl v-for="(item, key) in overview.products" :key="key">
           <img :src="imgs[item.name]" alt="" />
           <span style="color: #f50a0a;">
             {{ item.name }} x {{ item.num }}
           </span>
-          <img
-            :src="
-              /^矿脉/.test(item.sbName)
-                ? imgs[item.name]
-                : imgs[item.sbName.replace(/\([^\)]*\)/, '')]
-            "
-            alt=""
-          />{{ item.sbName }} x {{ item.sbNum | numFmt }}
+          <img :src="imgs[item.factoryName.replace('矿脉', '')]" alt="" />
+          {{ item.factoryFullname }} x {{ item.factoryNum | numFmt }}
         </dl>
       </div>
       <div>
-        <dl v-for="(item, i) in sb" :key="i">
-          <img
-            :src="
-              /矿脉/.test(item.name)
-                ? imgs[item.name.slice(0, item.name.indexOf('矿脉'))]
-                : imgs[item.name.replace(/\([^\)]*\)/, '')]
-            "
-            alt=""
-          />
-          {{ item.name }} x {{ item.num | numFmt }}
+        <dl
+          v-for="item in sortFactorys"
+          :key="'f' + item.key"
+          :title="
+            item.key.indexOf('矿脉') != -1
+              ? '需要开采的矿脉 大型采矿机双倍效率'
+              : '生产设备'
+          "
+        >
+          <img :src="imgs[item.name]" alt="" />
+          {{ item.key }} x {{ item.num | numFmt }}
+        </dl>
+        <dl
+          v-for="(num, name) in overview.materials"
+          :key="'m' + name"
+          :style="num > 0 ? 'color: #f50a0a' : 'color: #0ac62a'"
+          :title="num > 0 ? '额外的产物' : '额外的原料'"
+        >
+          <img :src="imgs[name.replace('矿脉', '')]" />
+          {{ name }} x {{ num | numFmt }}
         </dl>
       </div>
     </div>
@@ -42,20 +61,33 @@
     </span>
   </el-dialog>
 </template>
-
 <script>
 export default {
   props: {
+    overview: Object,
+    factory: Array,
+    dissipation: Number,
+    imgs: Object,
     visible: {
       type: Boolean,
       default: false
-    },
-    totalPower: Number,
-    yl: Array,
-    sb: Array,
-    imgs: Object
+    }
   },
   computed: {
+    sortFactorys() {
+      const vals = [];
+      for (let key in this.overview.factorys) {
+        const name = key.replace("矿脉", "");
+        vals.push({
+          key,
+          name,
+          num: this.overview.factorys[key],
+          index: this.factory.indexOf(name)
+        });
+      }
+      vals.sort((a, b) => a.index - b.index);
+      return vals;
+    },
     _visible: {
       get() {
         return this.visible;
@@ -76,20 +108,29 @@ export default {
   }
 };
 </script>
-
 <style lang="scss" scoped>
-.show-static {
+.dsp-overview {
+  :deep(.el-dialog) {
+    max-width: 800px;
+  }
+  .text {
+    white-space: normal;
+  }
   .all {
-    color: #f5c62a;
     display: flex;
+    flex-direction: row;
+    color: #f5c62a;
     & > * {
       flex-grow: 1;
     }
   }
-  img {
-    width: 20px;
-    height: 20px;
-    vertical-align: top;
+  @media screen and (max-width: 600px) {
+    :deep(.el-dialog) {
+      width: 90%;
+    }
+    .all {
+      flex-direction: column;
+    }
   }
 }
 </style>
