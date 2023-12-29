@@ -1,12 +1,17 @@
 export const factorydefault = {
+  storageprogram: "dsp-program",
   storagesetting: "dsp-setting",
   storageproduct: "dsp-product",
-  增产剂: 0,
+  program: "dsp-program",
+  setting: "dsp-setting",
+  product: "dsp-product",
   传送带: 0,
+  采矿设备: 0,
   冶炼设备: 0,
   制作台: 1,
   化工厂: 0,
   矩阵研究站: 0,
+  增产剂: 0,
   原油精炼厂: 0,
   能量枢纽: 0,
   微型粒子对撞机: 0,
@@ -50,6 +55,20 @@ export const factoryparams = {
       name: "自定义",
       title: "自定义传送带速度",
       speed: 30
+    }
+  ],
+  采矿设备: [
+    {
+      name: "无",
+      title: "不自动采集矿脉"
+    },
+    {
+      name: "采矿机",
+      title: "工作效率 100%"
+    },
+    {
+      name: "大型采矿机",
+      title: "工作效率 200%"
     }
   ],
   冶炼设备: [
@@ -274,7 +293,10 @@ export const factoryparams = {
     power: 0.72
   }
 };
-export const loadConfig = (key, val) => {
+export const loadConfig = (key, val, program) => {
+  if (program) {
+    key = `${key}-${program}`;
+  }
   let config = val;
   const str = localStorage.getItem(key);
   if (str) {
@@ -287,7 +309,47 @@ export const loadConfig = (key, val) => {
   return config;
 };
 
-export const loadFactoryList = () => {
+export const getFactorys = setting => {
+  return Object.keys(factoryparams).reduce((data, name) => {
+    data[name] = getFactoryInfo(name, setting);
+    return data;
+  }, {});
+};
+
+function getFactoryInfo(name, setting) {
+  const obj = factoryparams[name];
+  if (obj instanceof Array && (name !== "传送带" || setting["传送带"] !== 3)) {
+    return obj[+setting[name]];
+  }
+
+  let speed = setting[name];
+  if (name === "传送带") {
+    return {
+      name: `传送带(${setting["自定义传送带"]}/s)`,
+      speed: setting["自定义传送带"]
+    };
+  } else if (name === "分馏塔") {
+    if (name === "分馏塔") {
+      speed = getFactoryInfo("传送带", setting).speed;
+    }
+  } else {
+    if (name == "采矿机") {
+      speed *= 0.5;
+    } else if (/^.巨/.test(name)) {
+      speed *= setting[obj.name] * 8;
+    }
+    speed *= setting["采矿速度"] / 100;
+  }
+
+  return {
+    name: obj.name,
+    power: obj.power,
+    fullname: `${obj.name}(${speed.toFixed(3)}/s)`,
+    speed
+  };
+}
+
+export const getFactoryList = () => {
   const list = [];
   Object.values(factoryparams).forEach(i => {
     if (i instanceof Array) {

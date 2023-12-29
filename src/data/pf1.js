@@ -4,15 +4,14 @@
  * m ： 生产设备
  * t ： 生产时间(秒)
  * p ： 增产剂模式 undefined：可加速增产 1：仅可加速 -1：禁用
+ * mp： 轨道采集器_产物名称 提供一个便捷标识
  * n ： 显示配方数量(如果不提供就是1)
  * rn： 实际使用数量(如果不提供就是n)
  * c ： 目标产物数量(自动计算 s[0].rn)
  * cs： 产物数量(自动计算 sum(s.n) 影响传送带统计)
  * cq： 原料数量(自动计算 sum(q.n) 影响增产剂消耗)
  */
-// 当前使用
-
-export const formulaInit = () => {
+export const formulaInit = factorys => {
   const fn = i => {
     i.n = i.n === undefined ? 1 : i.n;
     i.rn = i.rn === undefined ? i.n : i.rn;
@@ -24,13 +23,44 @@ export const formulaInit = () => {
       item.cs = item.s.reduce((a, b) => a + (b.n || 1), 0);
       item.cq = item.q.reduce((a, b) => a + (b.n || 1), 0);
       item.c = item.s[0].rn;
-      if (key == "电力" || item.m == "黑雾残骸" || /采集器/.test(item.m)) {
-        item.cs = 0;
+      if (item.q.length == 0) {
+        item.p = -1;
       }
-      if (item.s.length > 1 && key != item.s[0].name) {
-        console.warn(
-          `warning: formula '${key}' first product is '${item.s[0].name}', must is '${key}'.`
-        );
+    }
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    const check = i => {
+      return formulaAll[i.name] !== undefined;
+    };
+    for (let key in formulaAll) {
+      for (let i in formulaAll[key]) {
+        const item = formulaAll[key][i];
+        if (item.s.length > 1 && key != item.s[0].name) {
+          console.warn(
+            `warning: formula '${key}' first product is '${item.s[0].name}', must is '${key}'.`
+          );
+        }
+        if (!item.s.every(check)) {
+          console.warn(
+            `warning: formula '${key}-${i}' product does not exist `
+          );
+        }
+        if (!item.q.every(check)) {
+          console.warn(
+            `warning: formula '${key}-${i}' material does not exist `
+          );
+        }
+        if (factorys[item.m] === undefined) {
+          console.warn(
+            `warning: formula '${key}-${i}' factory '${item.m}' does not exist `
+          );
+        }
+        if (!item.t) {
+          console.warn(
+            `warning: formula '${key}-${i}' build time does not exist `
+          );
+        }
       }
     }
   }
@@ -39,69 +69,70 @@ export const formulaInit = () => {
 export const formulaAll = {
   // 原料
   铁矿: [
-    { s: [{ name: "铁矿" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "铁矿" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "铁矿" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "铁矿" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "铁矿" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "铁矿" }], q: [], m: "大型采矿机", t: 1 }
   ],
   铜矿: [
-    { s: [{ name: "铜矿" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "铜矿" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "铜矿" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "铜矿" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "铜矿" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "铜矿" }], q: [], m: "大型采矿机", t: 1 }
   ],
   钛石: [
-    { s: [{ name: "钛石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "钛石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "钛石" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "钛石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "钛石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "钛石" }], q: [], m: "大型采矿机", t: 1 }
   ],
   石矿: [
-    { s: [{ name: "石矿" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "石矿" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "石矿" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "石矿" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "石矿" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "石矿" }], q: [], m: "大型采矿机", t: 1 }
   ],
   煤矿: [
-    { s: [{ name: "煤矿" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "煤矿" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "煤矿" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "煤矿" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "煤矿" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "煤矿" }], q: [], m: "大型采矿机", t: 1 }
   ],
-  水: [{ s: [{ name: "水" }], q: [], m: "抽水机", t: 1, p: -1 }],
-  原油: [{ s: [{ name: "原油" }], q: [], m: "原油萃取站", t: 1, p: -1 }],
+  水: [{ s: [{ name: "水" }], q: [], m: "抽水机", t: 1 }],
+  原油: [{ s: [{ name: "原油" }], q: [], m: "原油萃取站", t: 1 }],
   可燃冰: [
     {
       s: [{ name: "可燃冰" }, { name: "氢", n: 0 }],
       group: "组件",
       m: "冰巨采集器",
+      mp: "冰巨采集器_可燃冰",
       q: [],
       t: 1,
       p: -1
     },
-    { s: [{ name: "可燃冰" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "可燃冰" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "可燃冰" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "可燃冰" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "可燃冰" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "可燃冰" }], q: [], m: "大型采矿机", t: 1 }
   ],
   金伯利矿石: [
-    { s: [{ name: "金伯利矿石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "金伯利矿石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "金伯利矿石" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "金伯利矿石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "金伯利矿石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "金伯利矿石" }], q: [], m: "大型采矿机", t: 1 }
   ],
   分形硅石: [
-    { s: [{ name: "分形硅石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "分形硅石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "分形硅石" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "分形硅石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "分形硅石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "分形硅石" }], q: [], m: "大型采矿机", t: 1 }
   ],
   光栅石: [
-    { s: [{ name: "光栅石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "光栅石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "光栅石" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "光栅石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "光栅石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "光栅石" }], q: [], m: "大型采矿机", t: 1 }
   ],
   刺笋结晶: [
-    { s: [{ name: "刺笋结晶" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "刺笋结晶" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "刺笋结晶" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "刺笋结晶" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "刺笋结晶" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "刺笋结晶" }], q: [], m: "大型采矿机", t: 1 }
   ],
   单极磁石: [
-    { s: [{ name: "单极磁石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "单极磁石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "单极磁石" }], q: [], m: "大型采矿机", t: 1, p: -1 }
+    { s: [{ name: "单极磁石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "单极磁石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "单极磁石" }], q: [], m: "大型采矿机", t: 1 }
   ],
   临界光子: [
     {
@@ -121,16 +152,12 @@ export const formulaAll = {
       p: 1
     }
   ],
-  能量碎片: [{ s: [{ name: "能量碎片" }], q: [], m: "黑雾残骸", t: 1, p: -1 }],
-  负熵奇点: [{ s: [{ name: "负熵奇点" }], q: [], m: "黑雾残骸", t: 1, p: -1 }],
-  物质重组器: [
-    { s: [{ name: "物质重组器" }], q: [], m: "黑雾残骸", t: 1, p: -1 }
-  ],
-  硅基神经元: [
-    { s: [{ name: "硅基神经元" }], q: [], m: "黑雾残骸", t: 1, p: -1 }
-  ],
-  黑雾矩阵: [{ s: [{ name: "黑雾矩阵" }], q: [], m: "黑雾残骸", t: 1, p: -1 }],
-  核心素: [{ s: [{ name: "核心素" }], q: [], m: "黑雾残骸", t: 1, p: -1 }],
+  能量碎片: [{ s: [{ name: "能量碎片" }], q: [], m: "黑雾残骸", t: 1 }],
+  负熵奇点: [{ s: [{ name: "负熵奇点" }], q: [], m: "黑雾残骸", t: 1 }],
+  物质重组器: [{ s: [{ name: "物质重组器" }], q: [], m: "黑雾残骸", t: 1 }],
+  硅基神经元: [{ s: [{ name: "硅基神经元" }], q: [], m: "黑雾残骸", t: 1 }],
+  黑雾矩阵: [{ s: [{ name: "黑雾矩阵" }], q: [], m: "黑雾残骸", t: 1 }],
+  核心素: [{ s: [{ name: "核心素" }], q: [], m: "黑雾残骸", t: 1 }],
 
   // 组件
   铁块: [
@@ -389,7 +416,7 @@ export const formulaAll = {
       ],
       t: 6
     },
-    { s: [{ name: "有机晶体" }], group: "组件", m: "矿脉", q: [], t: 1, p: -1 },
+    { s: [{ name: "有机晶体" }], group: "组件", m: "矿脉", q: [], t: 1 },
     {
       s: [{ name: "有机晶体" }],
       group: "组件",
@@ -609,9 +636,9 @@ export const formulaAll = {
     }
   ],
   硅石: [
-    { s: [{ name: "硅石" }], q: [], m: "矿脉", t: 1, p: -1 },
-    { s: [{ name: "硅石" }], q: [], m: "采矿机", t: 1, p: -1 },
-    { s: [{ name: "硅石" }], q: [], m: "大型采矿机", t: 1, p: -1 },
+    { s: [{ name: "硅石" }], q: [], m: "矿脉", t: 1 },
+    { s: [{ name: "硅石" }], q: [], m: "采矿机", t: 1 },
+    { s: [{ name: "硅石" }], q: [], m: "大型采矿机", t: 1 },
     {
       s: [{ name: "硅石" }],
       q: [{ name: "石矿", n: 10 }],
@@ -668,6 +695,7 @@ export const formulaAll = {
       s: [{ name: "氢" }, { name: "重氢", n: 0 }],
       group: "组件",
       m: "气巨采集器",
+      mp: "气巨采集器_氢",
       q: [],
       t: 1,
       p: -1
@@ -676,6 +704,7 @@ export const formulaAll = {
       s: [{ name: "氢" }, { name: "可燃冰", n: 0 }],
       group: "组件",
       m: "冰巨采集器",
+      mp: "冰巨采集器_氢",
       q: [],
       t: 1,
       p: -1
@@ -920,6 +949,7 @@ export const formulaAll = {
       s: [{ name: "重氢" }, { name: "氢", n: 0 }],
       group: "组件",
       m: "气巨采集器",
+      mp: "气巨采集器_重氢",
       q: [],
       t: 1,
       p: -1
@@ -1325,7 +1355,7 @@ export const formulaAll = {
       s: [{ name: "空间翘曲器", n: 8 }],
       group: "消耗品",
       m: "制作台",
-      q: [{ name: "绿矩阵", n: 1 }],
+      q: [{ name: "引力矩阵", n: 1 }],
       t: 10
     },
     {

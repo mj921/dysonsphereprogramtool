@@ -1,5 +1,9 @@
 <template>
-  <el-dialog title="总览" :visible.sync="_visible" class="dsp-overview">
+  <el-dialog
+    :title="'总览 ' + title"
+    :visible.sync="_visible"
+    class="dsp-overview"
+  >
     <div class="text">
       总耗电大约：{{ overview.power | numFmt }} M
       <span
@@ -25,34 +29,56 @@
       <div>
         <dl v-for="(item, key) in overview.products" :key="key">
           <img :src="imgs[item.name]" alt="" />
-          <span style="color: #f50a0a;">
-            {{ item.name }} x {{ item.num }}
+          <span v-if="item.title" style="color: #f50a0a;">
+            <el-popover
+              placement="bottom-start"
+              trigger="hover"
+              popper-class="popper-title"
+              :content="item.title"
+            >
+              <span slot="reference">
+                {{ item.name }} x {{ item.num | numFmt }}
+                <template v-if="item.use">({{ item.use | numFmt }})</template>
+              </span>
+            </el-popover>
+          </span>
+          <span v-else style="color: #f50a0a;" @touchstart="touch = item.name">
+            {{ item.name }} x {{ item.num | numFmt }}
           </span>
           <img :src="imgs[item.factoryName.replace('矿脉', '')]" alt="" />
           {{ item.factoryFullname }} x {{ item.factoryNum | numFmt }}
         </dl>
       </div>
       <div>
-        <dl
-          v-for="item in sortFactorys"
-          :key="'f' + item.key"
-          :title="
-            item.key.indexOf('矿脉') != -1
-              ? '需要开采的矿脉 大型采矿机双倍效率'
-              : '生产设备'
-          "
-        >
-          <img :src="imgs[item.name]" alt="" />
-          {{ item.key }} x {{ item.num | numFmt }}
+        <dl v-for="item in sortFactorys" :key="'f' + item.key">
+          <el-popover
+            placement="bottom-start"
+            trigger="hover"
+            popper-class="popper-title"
+            :content="item.key | titleFactory"
+          >
+            <span slot="reference">
+              <img :src="imgs[item.name]" alt="" />
+              {{ item.key }} x {{ item.num | numFmt }} {{ item.index }}
+            </span>
+          </el-popover>
         </dl>
         <dl
           v-for="(num, name) in overview.materials"
           :key="'m' + name"
-          :style="num > 0 ? 'color: #f50a0a' : 'color: #0ac62a'"
-          :title="num > 0 ? '额外的产物' : '额外的原料'"
+          :style="num < 0 ? 'color: #0ac62a' : 'color: #f50a0a'"
         >
-          <img :src="imgs[name.replace('矿脉', '')]" />
-          {{ name }} x {{ num | numFmt }}
+          <el-popover
+            placement="bottom-start"
+            trigger="hover"
+            popper-class="popper-title"
+            :content="num | titleMaterial"
+          >
+            <span slot="reference">
+              <img :src="imgs[name.replace('矿脉', '')]" />
+              {{ name }} x {{ num | numFmt }}
+            </span>
+          </el-popover>
         </dl>
       </div>
     </div>
@@ -66,6 +92,7 @@ export default {
   props: {
     overview: Object,
     factory: Array,
+    title: String,
     dissipation: Number,
     imgs: Object,
     visible: {
@@ -98,21 +125,33 @@ export default {
     }
   },
   filters: {
+    titleFactory(name) {
+      if (name.indexOf("矿脉") == -1) {
+        return "生产设备";
+      }
+      if (name.indexOf("采矿机") == -1) {
+        return "需要开采的矿脉 大型采矿机双倍效率";
+      }
+      return "自动配置的采矿设备";
+    },
+    titleMaterial(num) {
+      if (num > 0) {
+        return "额外的产物";
+      }
+      if (num < 0) {
+        return "额外的原料";
+      }
+      return "产物和额外的原料相互抵消";
+    },
     numFmt(val) {
       if (!val) return 0;
-      return val
-        .toFixed(2)
-        .replace(/\.00$/, "")
-        .replace(/(\.\d)0$/, "$1");
+      return Number(val.toFixed(3));
     }
   }
 };
 </script>
 <style lang="scss" scoped>
 .dsp-overview {
-  :deep(.el-dialog) {
-    max-width: 800px;
-  }
   .text {
     white-space: normal;
   }
@@ -124,13 +163,22 @@ export default {
       flex-grow: 1;
     }
   }
-  @media screen and (max-width: 600px) {
-    :deep(.el-dialog) {
-      width: 90%;
-    }
+  @media screen and (max-width: 860px) {
     .all {
       flex-direction: column;
     }
   }
+}
+
+:deep(.popper-title) {
+  padding: 0;
+}
+
+:deep(.el-popover.popper-title) {
+  padding: 0;
+}
+
+.el-popover.popper-title {
+  padding: 0;
 }
 </style>

@@ -1,6 +1,33 @@
 <template>
-  <el-dialog title="参数配置" :visible.sync="_visible" class="dsp-setting">
+  <el-dialog
+    :title="'参数配置 ' + name"
+    :visible.sync="_visible"
+    class="dsp-setting"
+  >
     <el-form label-width="120px" inline size="mini" class="dsp-setting-form">
+      <el-form-item
+        key="戴森球方案"
+        label="戴森球方案"
+        :title="`请选择戴森球方案`"
+      >
+        <el-select
+          v-model="name"
+          @change="changeProgram"
+          :popper-append-to-body="false"
+          filterable
+          clearable
+        >
+          <el-option
+            v-for="(item, i) in programdata"
+            :key="i"
+            :value="item.name"
+            :label="item.name"
+            :title="item.title"
+          >
+            {{ item.name }}
+          </el-option>
+        </el-select>
+      </el-form-item>
       <template v-for="(factorys, name) in factoryparams">
         <template v-if="!Array.isArray(factorys)">
           <el-form-item
@@ -44,25 +71,33 @@
       </el-form-item>
     </el-form>
     <span slot="footer">
-      <el-button @click="save">保存</el-button>
-      <el-button @click="cancel">关闭</el-button>
+      <el-button @click="reset" title="重置当前方案的配置TODO">
+        重置
+      </el-button>
+      <el-button @click="save" title="保存配置并更新当前产物数据">
+        保存
+      </el-button>
+      <el-button @click="_visible = false">关闭</el-button>
     </span>
   </el-dialog>
 </template>
 <script>
-import { factorydefault, factoryparams } from "../data/sb";
+import { factorydefault, factoryparams, loadConfig } from "../data/sb";
 import imgs from "../data/imgs";
 export default {
   props: {
-    setting: Object,
+    programname: String,
+    programdata: Array,
     visible: {
       type: Boolean,
       default: false
     }
   },
-  inject: ["settingsave", "settingcancel"],
+  inject: ["settingUpdate"],
   data() {
     return {
+      name: "",
+      setting: {},
       imgs,
       factoryparams
     };
@@ -77,7 +112,26 @@ export default {
       }
     }
   },
+  watch: {
+    visible(val) {
+      if (val) {
+        this.name = this.programname;
+        this.setting = loadConfig(
+          factorydefault.setting,
+          { ...factorydefault },
+          this.name
+        );
+      }
+    }
+  },
   methods: {
+    changeProgram() {
+      this.setting = loadConfig(
+        factorydefault.setting,
+        { ...factorydefault },
+        this.name
+      );
+    },
     changeSetting(type) {
       if (type == "分馏塔" && this.setting[type] == "传送带速度") {
         return;
@@ -120,11 +174,16 @@ export default {
         );
       }
     },
-    cancel() {
-      this.settingcancel();
-    },
     save() {
-      this.settingsave();
+      const key = this.name
+        ? `${factorydefault.setting}-${this.name}`
+        : factorydefault.setting;
+      localStorage.setItem(key, JSON.stringify(this.setting));
+      this._visible = false;
+      this.settingUpdate(this.name, this.setting);
+    },
+    reset() {
+      this.setting = { ...factorydefault };
     }
   }
 };
@@ -144,11 +203,7 @@ $small-screen: 600px;
   }
   :deep(.el-dialog) {
     width: 768px;
-    @media screen and (max-width: 860px) {
-      width: 60%;
-    }
     @media screen and (max-width: $small-screen) {
-      width: 90%;
       .el-form-item__content {
         width: calc(100% - 120px);
       }

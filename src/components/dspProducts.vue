@@ -21,18 +21,19 @@
               <img :src="imgs[data.factoryName.replace('矿脉', '')]" />
               {{ data.factoryFullname }} x {{ data.factoryNum | numFmt }}
             </div>
-            <div v-if="data.beltNum">
+            <div>
               <img v-if="imgs[data.beltName]" :src="imgs[data.beltName]" />
               {{ data.beltName }} x {{ data.beltNum | numFmt }}
             </div>
-            <div v-if="data.sprayedMode != 'none'">
-              <img :src="imgs[data.sprayedData.name]" />
+            <div
+              v-if="data.sprayedMode != 'none'"
+              :set="(sprayed = factorys['增产剂'])"
+            >
+              <img :src="imgs[sprayed.name]" />
               <template v-if="data.sprayedMode == 'speedup'">
-                加速{{ data.sprayedData.speedup * 100 - 100 }}%
+                加速{{ sprayed.speedup * 100 - 100 }}%
               </template>
-              <template v-else>
-                增产{{ data.sprayedData.extra * 100 - 100 }}%
-              </template>
+              <template v-else> 增产{{ sprayed.extra * 100 - 100 }}% </template>
               x {{ data.sprayedNum | numFmt }}
             </div>
             <div v-for="(num, name) in data.extraProduct" :key="'s' + name">
@@ -104,10 +105,10 @@
               </div>
               <div v-for="(jtem, j) in item.s" :key="'s' + j">
                 <img :src="imgs[jtem.name]" />
-                <span v-if="/^.巨/.test(item.m)">
-                  {{ data.factorys[`${item.m}_${jtem.name}`].speed | numFmt }}
+                <span v-if="item.mp">
+                  {{ factorys[`${item.m}_${jtem.name}`].speed | numFmt }}
                 </span>
-                <span v-else>{{ data.factorys[item.m].speed | numFmt }}</span>
+                <span v-else>{{ factorys[item.m].speed | numFmt }}</span>
               </div>
             </template>
           </dl>
@@ -121,7 +122,13 @@
         v-for="(item, i) in data.formulaMaterial"
         :key="i"
       >
-        <tree :data="item" :vertical="vertical" :simple="simple" />
+        <dsp-products
+          :data="item"
+          :factorys="factorys"
+          :program="program"
+          :vertical="vertical"
+          :simple="simple"
+        />
       </div>
     </div>
   </div>
@@ -130,9 +137,11 @@
 import imgs from "../data/imgs";
 import { factorydefault, loadConfig } from "../data/sb";
 export default {
-  name: "Tree",
+  name: "dspProducts",
   props: {
     data: Object,
+    factorys: Object,
+    program: String,
     vertical: {
       type: Boolean,
       default: false
@@ -145,10 +154,7 @@ export default {
   inject: ["productUpdate"],
   filters: {
     numFmt(val) {
-      return val
-        .toFixed(2)
-        .replace(/\.00$/, "")
-        .replace(/(\.\d)0$/, "$1");
+      return Number(val.toFixed(3));
     }
   },
   data() {
@@ -159,16 +165,17 @@ export default {
   },
   methods: {
     getProductList(data) {
-      if (data.sprayedData.count == 0) {
+      const sprayed = this.factorys["增产剂"];
+      if (sprayed === undefined || sprayed.count == 0) {
         return ["未设置增产剂参数"];
       }
       if (data.sprayedType == 1) {
-        return ["无", `加速${data.sprayedData.speedup * 100 - 100}%`];
+        return ["无", `加速${sprayed.speedup * 100 - 100}%`];
       }
       return [
         "无",
-        `加速${data.sprayedData.speedup * 100 - 100}%`,
-        `增产${data.sprayedData.extra * 100 - 100}%`
+        `加速${sprayed.speedup * 100 - 100}%`,
+        `增产${sprayed.extra * 100 - 100}%`
       ];
     },
     changeState(data, item) {
@@ -209,25 +216,25 @@ export default {
         );
       }
     },
-    changeData(key, fn) {
-      const config = loadConfig(factorydefault.storageproduct, {});
-      if (!config[key]) {
-        config[key] = { formula: 0, sprayed: "", select: [] };
+    changeData(name, fn) {
+      const key = this.program
+        ? `${factorydefault.product}-${this.program}`
+        : factorydefault.product;
+      const config = loadConfig(key, {});
+      if (!config[name]) {
+        config[name] = { formula: 0, sprayed: "", select: [] };
       }
 
-      fn(config[key]);
+      fn(config[name]);
       if (
-        config[key].formula == 0 &&
-        config[key].sprayed == "" &&
-        config[key].select.length == 0
+        config[name].formula == 0 &&
+        config[name].sprayed == "" &&
+        config[name].select.length == 0
       ) {
-        delete config[key];
+        delete config[name];
       }
 
-      localStorage.setItem(
-        factorydefault.storageproduct,
-        JSON.stringify(config)
-      );
+      localStorage.setItem(key, JSON.stringify(config));
       this.visible = false;
       this.productUpdate();
     }

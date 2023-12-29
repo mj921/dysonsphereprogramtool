@@ -3,23 +3,18 @@
     <div class="dsp-form">
       <div class="select-block form-block">
         <el-select
-          v-model="currentProduct"
-          class="dsp-form-list"
+          v-model="productname"
           filterable
+          popper-class="dsp-form-list"
           placeholder="请选择产物"
-          :popper-append-to-body="false"
         >
           <el-option-group
-            v-for="(val, key) in productAll.list"
+            v-for="(val, key) in itemall.list"
             :key="key"
             :label="val"
           >
             <template v-if="key != 'fule' && key != 'ammo'">
-              <el-option
-                v-for="item in productAll[key]"
-                :key="item"
-                :value="item"
-              >
+              <el-option v-for="item in itemall[key]" :key="item" :value="item">
                 <img v-if="imgs[item]" class="select-img" :src="imgs[item]" />
                 {{ item }}
               </el-option>
@@ -27,7 +22,7 @@
           </el-option-group>
           <el-option-group key="resources" label="资源">
             <el-option
-              v-for="item in productAll['resources']"
+              v-for="item in itemall['resources']"
               :key="item"
               :value="item"
             >
@@ -39,26 +34,17 @@
         <span>或</span>
         <el-popover
           v-model="visibleselect"
-          class="dsp-form-map"
-          popper-class="panel-popper"
+          popper-class="dsp-form-map"
           trigger="click"
           content="viewport"
           :placement="width > 800 ? 'top' : 'left'"
-          :append-to-body="false"
         >
-          <div
-            slot="reference"
-            class="tree-block"
-            :class="{
-              'has-children':
-                data.formulaMaterial && data.formulaMaterial.length > 1
-            }"
-          >
+          <div slot="reference" class="tree-block">
             <el-button type="primary" size="small">选择产物(图片)</el-button>
           </div>
           <div class="select-tabs">
             <dl
-              v-for="(val, key) in itemname"
+              v-for="(val, key) in itemall.map"
               class="select-tab"
               :class="{ curr: itemtab === key }"
               :key="key"
@@ -75,7 +61,7 @@
             <dl>
               <div class="select-filter">
                 <el-checkbox
-                  v-for="(name, key) in productAll.list"
+                  v-for="(name, key) in itemall.list"
                   :key="key"
                   v-model="itemactive[key]"
                   @change="changeFilter"
@@ -85,7 +71,7 @@
             </dl>
           </div>
           <div
-            v-for="(_, item) in itemname"
+            v-for="(_, item) in itemall.map"
             v-show="itemtab === item"
             class="panel"
             :key="item"
@@ -96,7 +82,7 @@
                   :class="{
                     curr:
                       itemmap[item][`${i}-${j}`] &&
-                      itemmap[item][`${i}-${j}`] === currentProduct
+                      itemmap[item][`${i}-${j}`] === productname
                   }"
                   v-for="j in 14"
                   :key="`${item}-col-${i}-${j}`"
@@ -147,49 +133,79 @@
     <div class="dsp-menu">
       <el-button @click="visibleoverview = true">查看总览</el-button>
       <el-button @click="visibledescribe = true">查看说明</el-button>
+      <el-button @click="visibleprogram = true">方案配置</el-button>
       <el-button @click="visibleconfig = true">参数配置</el-button>
-      <el-button @click="clearCache">重置默认值</el-button>
+      <el-select
+        v-model="programname"
+        filterable
+        clearable
+        :popper-append-to-body="false"
+        placeholder="请选择戴森球方案"
+      >
+        <el-option
+          v-for="(item, i) in programdata"
+          :key="i"
+          :value="item.name"
+          :label="item.name"
+        >
+          {{ item.name }}
+        </el-option>
+      </el-select>
     </div>
     <el-tabs
-      v-show="productList.length > 0"
-      :value="currentProduct"
+      :value="productname"
       tab-position="top"
       closable
+      allow-create
       @tab-remove="productRemove"
       @tab-click="productChange"
       class="dsp-procucts"
     >
       <el-tab-pane
-        v-for="item in productList"
-        :key="item"
-        :label="item"
-        :name="item"
+        v-for="name in productlist"
+        :key="name"
+        :label="name"
+        :name="name"
       >
         <el-button @click="visiblecurrent = true" style="margin: 0 10px;">
           查看当前产物总览
         </el-button>
         <dsp-products
-          :data="productMapping[item].data"
+          v-if="productdata[name] && productdata[name].data"
+          :data="productdata[name].data"
+          :factorys="productfactorys"
+          :program="programname"
           :vertical="configvertical"
           :simple="!configsimple"
         />
       </el-tab-pane>
     </el-tabs>
-    <dsp-describe :visible.sync="visibledescribe" />
-    <dsp-setting :visible.sync="visibleconfig" :setting="factorysetting" />
+    <dsp-describe :visible.sync="visibledescribe" :programname="programname" />
+    <dsp-setting
+      :visible.sync="visibleconfig"
+      :programname="programname"
+      :programdata="programdata"
+    />
+    <dsp-programs
+      :visible.sync="visibleprogram"
+      :programname="programname"
+      :programdata="programdata"
+    />
     <dsp-overview
-      v-if="productMapping[currentProduct]"
+      v-if="productdata[productname] && productdata[productname].overview"
       :visible.sync="visiblecurrent"
-      :overview="productMapping[currentProduct].overview"
-      :factory="factorylist"
-      :dissipation="factorysetting['能量散失']"
+      :overview="productdata[productname].overview"
+      :factory="itemfactorys"
+      :title="productname"
+      :dissipation="productsetting['能量散失']"
       :imgs="imgs"
     />
     <dsp-overview
       :visible.sync="visibleoverview"
       :overview="overview"
-      :factory="factorylist"
-      :dissipation="factorysetting['能量散失']"
+      :factory="itemfactorys"
+      :title="programname"
+      :dissipation="productsetting['能量散失']"
       :imgs="imgs"
     />
   </div>
@@ -199,15 +215,26 @@ import productAll from "../data/data";
 import { formulaAll, formulaInit } from "../data/pf1";
 import {
   factorydefault,
-  factoryparams,
   loadConfig,
-  loadFactoryList
+  getFactorys,
+  getFactoryList
 } from "../data/sb";
 import imgs from "../data/imgs";
 import dspDescribe from "../components/dspDescribe";
-import dspOverview from "../components/showStatic";
-import dspProducts from "../components/tree";
+import dspOverview from "../components/dspOverview";
+import dspProducts from "../components/dspProducts";
+import dspPrograms from "../components/dspPrograms";
 import dspSetting from "../components/dspSetting";
+
+function increment(data, key, val) {
+  data[key] = (data[key] || 0) + val;
+}
+
+function incrementMap(dst, src) {
+  for (const [key, val] of Object.entries(src)) {
+    dst[key] = (dst[key] || 0) + val;
+  }
+}
 
 export default {
   name: "Home",
@@ -215,19 +242,22 @@ export default {
     dspDescribe,
     dspOverview,
     dspProducts,
+    dspPrograms,
     dspSetting
   },
   data() {
-    console.clear();
-    console.log("app init");
-    formulaInit();
-    const itemname = { items: "组件", buildings: "建筑" };
+    formulaInit(factorydefault);
+    const productdatadefault = {};
+    const setting = loadConfig(factorydefault.setting, {
+      ...factorydefault
+    });
+
     const itemlist = [];
     const itemmap = {};
-    for (let key in itemname) {
+    for (let key in productAll.map) {
       itemmap[key] = {};
       itemlist.push({
-        name: itemname[key],
+        name: productAll.map[key],
         options: productAll[key].map(i => {
           const arr = i.split("-");
           const name = arr[arr.length - 1];
@@ -241,40 +271,47 @@ export default {
     }
 
     return {
-      data: {},
       imgs: imgs,
-      productAll: productAll,
-      currentProduct: "",
-      productList: [],
-      productMapping: {},
+      programname: "",
+      programdata: JSON.parse(localStorage.getItem("dsp-programs") || "[]"),
+      productname: "",
+      productlist: [],
+      productdata: productdatadefault,
+      productdatadefault,
+      productsetting: setting,
+      productfactorys: getFactorys(setting),
       itemtab: "items",
-      itemname,
       itemmap,
       itemlist,
+      itemall: productAll,
       itemactive: {},
       itemfilter: [],
       itemresources: productAll.resources,
+      itemfactorys: getFactoryList().concat(productAll.resources),
       configtype: "产量",
       confignum: 60,
       configvertical: false,
       configsimple: false,
       configmaterial: false,
-      factorysetting: loadConfig(factorydefault.storagesetting, {
-        ...factorydefault
-      }),
-      factoryparams,
-      factorylist: loadFactoryList().concat(productAll.resources),
       visibleselect: false,
       visibleoverview: false,
       visibledescribe: false,
+      visibleprogram: false,
       visibleconfig: false,
       visiblecurrent: false
     };
   },
   watch: {
-    currentProduct(val) {
-      if (val) {
+    programname(val) {
+      this.programActive(val);
+    },
+    productname(val) {
+      if (val && !(this.productdata[val] && this.productdata[val].data)) {
+        const save = this.productlist.indexOf(val) === -1;
         this.productUpdate();
+        if (save) {
+          this.programSave();
+        }
       }
     }
   },
@@ -289,45 +326,65 @@ export default {
         factorys: {},
         materials: {}
       };
-      this.productList.forEach(name => {
-        const item = this.productMapping[name].overview;
-        data.power += item.power;
-        Object.keys(item.products).map(key => {
+      for (const item of Object.values(this.productdata)) {
+        if (item.data === undefined) {
+          continue;
+        }
+        data.power += item.overview.power;
+        for (const [key, val] of Object.entries(item.overview.products)) {
           if (!data.products[key]) {
             data.products[key] = {
-              name: item.products[key].name,
+              name: val.name,
               num: 0,
-              factoryName: item.products[key].factoryName,
-              factoryFullname: item.products[key].factoryFullname,
+              factoryName: val.factoryName,
+              factoryFullname: val.factoryFullname,
               factoryNum: 0
             };
           }
-          data.products[key].num += item.products[key].num;
-          data.products[key].factoryNum += item.products[key].factoryNum;
-        });
-        Object.keys(item.factorys).map(key => {
-          data.factorys[key] = (data.factorys[key] || 0) + item.factorys[key];
-        });
-        Object.keys(item.materials).map(key => {
-          data.materials[key] =
-            (data.materials[key] || 0) + item.materials[key];
-        });
-      });
+          data.products[key].num += val.num;
+          data.products[key].factoryNum += val.factoryNum;
+        }
+        incrementMap(data.factorys, item.overview.factorys);
+        incrementMap(data.materials, item.overview.materials);
+      }
+
+      // 抵消终极产物和额外原料
+      for (const [name, item] of Object.entries(this.productdata)) {
+        if (item.data === undefined) {
+          continue;
+        }
+        const key = `${item.data.productName}-${item.data.factoryName}`;
+        const val = item.data.productNum;
+        const num = data.materials[name];
+
+        // TODO .toFixed(3)
+        if (num < 0) {
+          const use = num + val > 0 ? -num : val;
+          data.products[key].title = `累计生产:${
+            data.products[key].num
+          } 终极产物:${val} 中间产物:${data.products[key].num -
+            val} 额外消耗终极产物:${use}`;
+          data.products[key].num -= use;
+          data.products[key].use = use;
+          data.materials[name] += use;
+        } else {
+          data.products[key].title = `累计生产:${
+            data.products[key].num
+          } 终极产物:${val} 中间产物:${data.products[key].num - val}`;
+        }
+      }
       return data;
     }
   },
   filters: {
     numFmt(val) {
-      return val
-        .toFixed(2)
-        .replace(/\.00$/, "")
-        .replace(/(\.\d)0$/, "$1");
+      return Number(val.toFixed(3));
     }
   },
   provide() {
     return {
-      settingsave: this.settingsave,
-      settingcancel: this.settingcancel,
+      programUpdate: this.programUpdate,
+      settingUpdate: this.settingUpdate,
       productUpdate: this.productUpdate
     };
   },
@@ -336,17 +393,16 @@ export default {
       const list = [];
       for (let key in this.itemactive) {
         if (this.itemactive[key]) {
-          list.push(...this.productAll[key]);
+          list.push(...this.itemall[key]);
         }
       }
       this.itemfilter = list;
     },
     changeType() {
-      if (
-        this.currentProduct &&
-        this.productMapping[this.currentProduct].configtype !== this.configtype
-      ) {
+      const product = this.productdata[this.productname];
+      if (product && product.configtype !== this.configtype) {
         this.productUpdate();
+        this.programSave();
       }
     },
     changeNum() {
@@ -354,149 +410,181 @@ export default {
       if (this.confignum === 0) {
         this.confignum = 60;
       }
-      if (
-        this.currentProduct &&
-        this.productMapping[this.currentProduct].confignum !== this.confignum
-      ) {
+
+      const product = this.productdata[this.productname];
+      if (product && product.confignum !== this.confignum) {
+        this.productUpdate();
+        this.programSave();
+      }
+    },
+    programActive(name) {
+      const program = this.programdata.find(item => item.name == name) || {
+        data: this.productdatadefault
+      };
+      this.productsetting = loadConfig(
+        factorydefault.setting,
+        {
+          ...factorydefault
+        },
+        this.programname
+      );
+      this.productfactorys = getFactorys(this.productsetting);
+      this.productlist = Object.keys(program.data);
+      this.productdata = program.data;
+      // 对切换方案后未加载的数据执行加载
+      Object.values(program.data).forEach(product => {
+        if (product.data === undefined) {
+          this.configtype = product.configtype;
+          this.confignum = product.confignum;
+          this.configmaterial = product.configmaterial;
+          this.productname = product.name;
+          this.productUpdate();
+        }
+      });
+      this.productname = this.productlist.length > 0 ? this.productlist[0] : "";
+    },
+    programUpdate(data) {
+      // 清理被移除方案的配置
+      this.programdata.forEach(item => {
+        if (!data.find(p => item.name == p.source)) {
+          localStorage.removeItem(`${factorydefault.setting}-${item.name}`);
+          localStorage.removeItem(`${factorydefault.product}-${item.name}`);
+        }
+      });
+      // 根据name映射创建新的方案组
+      this.programdata = data.map(item => {
+        const last = this.programdata.find(p => p.name == item.source);
+        if (last === undefined) {
+          return { name: item.name, data: {} };
+        }
+        // 配置重命名
+        if (item.name != item.source) {
+          localStorage.setItem(
+            `${factorydefault.setting}-${item.name}`,
+            localStorage.getItem(`${factorydefault.setting}-${item.source}`)
+          );
+          localStorage.removeItem(`${factorydefault.setting}-${item.source}`);
+          localStorage.setItem(
+            `${factorydefault.product}-${item.name}`,
+            localStorage.getItem(`${factorydefault.product}-${item.source}`)
+          );
+          localStorage.removeItem(`${factorydefault.product}-${item.source}`);
+        }
+        return {
+          name: item.name,
+          data: last.data
+        };
+      });
+      this.programSave(true);
+      this.visibleprogram = false;
+    },
+    programData() {
+      return this.programdata.map(i => {
+        return {
+          name: i.name,
+          data: Object.values(i.data).reduce((data, item) => {
+            data[item.name] = {
+              name: item.name,
+              confignum: item.confignum,
+              configtype: item.configtype,
+              configmaterial: item.configmaterial
+            };
+            return data;
+          }, {})
+        };
+      });
+    },
+    programSave(force) {
+      if (force || this.programname != "") {
+        localStorage.setItem(
+          "dsp-programs",
+          JSON.stringify(this.programData())
+        );
+      }
+    },
+    settingUpdate(name, setting) {
+      if (name === this.programname) {
+        this.productsetting = setting;
+        this.productfactorys = getFactorys(this.productsetting);
         this.productUpdate();
       }
     },
-    settingcancel() {
-      this.factorysetting = loadConfig(factorydefault.storagesetting, {
-        ...factorydefault
-      });
-      this.visibleconfig = false;
-    },
-    settingsave() {
-      localStorage.setItem(
-        factorydefault.storagesetting,
-        JSON.stringify(this.factorysetting)
-      );
-      this.visibleconfig = false;
-      this.productUpdate();
-    },
+
     productChange(el) {
-      this.currentProduct = el.name;
-      this.confignum = this.productMapping[el.name].confignum;
-      this.configtype = this.productMapping[el.name].configtype;
-      this.configmaterial = this.productMapping[el.name].configmaterial;
+      const product = this.productdata[el.name];
+      this.confignum = product.confignum;
+      this.configtype = product.configtype;
+      this.configmaterial = product.configmaterial;
+      this.productname = product.name;
     },
     productRemove(name) {
-      this.productList.splice(this.productList.indexOf(name), 1);
-      delete this.productMapping[name];
-      if (this.currentProduct === name) {
-        this.currentProduct =
-          this.productList.length > 0
-            ? this.productList[this.productList.length - 1]
-            : "";
+      this.productlist.splice(this.productlist.indexOf(name), 1);
+      delete this.productdata[name];
+      if (this.productname === name) {
+        const names = this.productlist;
+        this.productname = names.length > 0 ? names[names.length - 1] : "";
       }
+      this.programSave();
     },
-    productSelect(wp) {
-      if (!wp) return;
-      this.currentProduct = wp;
+    productSelect(name) {
+      if (!name) return;
+      this.productname = name;
       this.visibleselect = false;
     },
     productUpdate() {
-      if (!this.currentProduct || !formulaAll[this.currentProduct]) return;
-      if (!this.productMapping[this.currentProduct]) {
-        this.productList.push(this.currentProduct);
-      }
+      const name = this.productname;
+      if (!name || !formulaAll[name]) return;
+      const config = {
+        setting: loadConfig(factorydefault.product, {}, this.programname),
+        belt: this.productfactorys["传送带"],
+        sprayed: this.productfactorys["增产剂"]
+      };
       const data = this.getProductData(
         "root",
-        this.currentProduct,
-        this.getProductNum(),
-        this.getProductConfig()
+        name,
+        this.getProductNum(name, this.confignum),
+        config
       );
 
-      this.$set(this.productMapping, this.currentProduct, {
+      this.$set(this.productdata, name, {
+        name,
         data,
         overview: this.getOverview(data),
         confignum: this.confignum,
         configtype: this.configtype,
         configmaterial: this.configmaterial
       });
-      this.$forceUpdate();
+      this.productlist = Object.keys(this.productdata);
+      // this.$forceUpdate();
     },
-    getFactoryInfo(name) {
-      const config = this.factorysetting;
-      const obj = factoryparams[name];
-      if (
-        obj instanceof Array &&
-        (name !== "传送带" || config["传送带"] !== 3)
-      ) {
-        return obj[+config[name]];
-      }
-
-      let speed = config[name];
-      if (name === "传送带") {
-        return {
-          name: `传送带(${config["自定义传送带"]}/s)`,
-          speed: config["自定义传送带"]
-        };
-      } else if (name === "分馏塔") {
-        if (name === "分馏塔") {
-          speed = this.getFactoryInfo("传送带").speed;
-        }
-      } else {
-        if (name == "采矿机") {
-          speed *= 0.5;
-        } else if (/^.巨/.test(name)) {
-          speed *= config[obj.name] * 8;
-        }
-        speed *= config["采矿速度"] / 100;
-      }
-
-      return {
-        name: obj.name,
-        power: obj.power,
-        fullname: `${obj.name}(${speed.toFixed(2)}/s)`,
-        speed
-      };
-    },
-    getProductNum() {
+    getProductNum(name, num) {
       if (this.configtype === "产量") {
-        return this.confignum;
+        return num;
       }
 
-      const config = loadConfig(factorydefault.storageproduct, {})[
-        `root-${this.currentProduct}`
+      const config = loadConfig(factorydefault.product, {}, this.programname)[
+        `root-${name}`
       ] || { formula: 0, sprayed: "" };
-      const formula = formulaAll[this.currentProduct][config.formula];
-      const proliferator = this.getFactoryInfo("增产剂");
-      const factoryName = /^.巨/.test(formula.m)
-        ? `${formula.m}_${this.currentProduct}`
-        : formula.m;
-      let num = this.confignum * 60;
+      const formula = formulaAll[name][config.formula];
+      const sprayed = this.productfactorys["增产剂"];
+      const factoryName = formula.mp || formula.m;
       switch (this.configtype) {
         case "设备":
           if (config.sprayed === "extra") {
-            num *= proliferator.extra;
+            num *= sprayed.extra;
           }
           if (config.sprayed === "speedup") {
-            num *= proliferator.speedup;
+            num *= sprayed.speedup;
           }
           return (
-            (num * formula.c * this.getFactoryInfo(factoryName).speed) /
+            (num * 60 * formula.c * this.productfactorys[factoryName].speed) /
             formula.t
           );
         case "传送带":
-          return num * this.getFactoryInfo("传送带").speed;
+          return num * 60 * this.productfactorys["传送带"].speed;
         default:
-          return this.confignum;
+          return num;
       }
-    },
-    getProductConfig() {
-      const factorys = Object.keys(this.factoryparams).reduce((data, name) => {
-        data[name] = this.getFactoryInfo(name);
-        return data;
-      }, {});
-
-      return {
-        setting: loadConfig(factorydefault.storageproduct, {}),
-        factorys,
-        belt: factorys["传送带"],
-        proliferator: factorys["增产剂"]
-      };
     },
     getProductData(parent, name, num = 60, config) {
       const setting = config.setting[`${parent}-${name}`] || {
@@ -508,6 +596,7 @@ export default {
       const formulas = formulaAll[name];
       const formulaIndex = setting.formula;
       const formula = formulas[formulaIndex];
+      const factory = this.productfactorys[formula.mp || formula.m];
       const formulaExec = formula.q.map(item => {
         let state = this.hasMaterial(config, name, item.name);
         if (setting.select.indexOf(item.name) != -1) {
@@ -515,10 +604,6 @@ export default {
         }
         return state;
       });
-      const factory =
-        config.factorys[
-          /^.巨/.test(formula.m) ? `${formula.m}_${name}` : formula.m
-        ];
 
       // 处理增产剂模式、增产剂数量、电力消耗、生产速度、生产次数
       let outenergy = 1;
@@ -526,15 +611,15 @@ export default {
       let outNum = num / formula.c;
       let sprayedMode = setting.sprayed;
       let sprayedNum = 0;
-      if (config.proliferator.count == 0) {
+      if (config.sprayed.count == 0) {
         sprayedMode = "none";
       } else if (sprayedMode == "speedup" && formula.p != -1) {
-        outenergy = config.proliferator.energy;
-        outspeed *= config.proliferator.speedup;
-        sprayedNum = (outNum * formula.cq) / config.proliferator.count;
+        outenergy = config.sprayed.energy;
+        outspeed *= config.sprayed.speedup;
+        sprayedNum = (outNum * formula.cq) / config.sprayed.count;
       } else if (sprayedMode == "extra" && formula.p == undefined) {
-        outNum /= config.proliferator.extra;
-        sprayedNum = (outNum * formula.cq) / config.proliferator.count;
+        outNum /= config.sprayed.extra;
+        sprayedNum = (outNum * formula.cq) / config.sprayed.count;
       } else {
         sprayedMode = "none";
       }
@@ -543,9 +628,11 @@ export default {
       const extra1 = (m, o) => {
         if (o.rn !== 0) {
           m[o.name] = (num / formula.c) * o.rn;
-        } else if (/^.巨/.test(formula.m)) {
+        } else if (formula.mp) {
           m[o.name] =
-            factoryNum * 60 * config.factorys[`${formula.m}_${o.name}`].speed;
+            factoryNum *
+            60 *
+            this.productfactorys[`${formula.m}_${o.name}`].speed;
         }
         return m;
       };
@@ -557,9 +644,19 @@ export default {
       };
       return {
         parent,
-        factorys: config.factorys,
+        power: factory.power * factoryNum * outenergy,
         productName: name,
         productNum: num,
+        factoryName:
+          factory.name == "矿脉" ? name + factory.name : factory.name,
+        factoryFullname: factory.fullname || factory.name,
+        factoryNum,
+        beltName: config.belt.name,
+        beltNum: ((num / formula.c) * formula.cs) / 60 / config.belt.speed,
+        sprayedName: config.sprayed.name,
+        sprayedNum,
+        sprayedMode,
+        sprayedType: formula.p,
         extraProduct: formula.s.slice(1).reduce(extra1, {}),
         // TOOD item.name != name
         extraMaterial: formula.q
@@ -567,26 +664,15 @@ export default {
           .filter(item => item.name !== name)
           .reduce(extra2, {}),
         formulaIndex,
+        formulaExec,
         formulaAll: formulas,
-        formulaExec, // drak?
         formulaMaterial: formula.q
           .filter((_, i) => formulaExec[i])
           .filter(item => item.rn !== 0)
           .filter(item => item.name !== name)
           .map(item =>
             this.getProductData(name, item.name, item.rn * outNum, config)
-          ),
-        factoryName:
-          factory.name == "矿脉" ? name + factory.name : factory.name,
-        factoryFullname: factory.fullname || factory.name,
-        factoryNum,
-        beltName: config.belt.name,
-        beltNum: ((num / formula.c) * formula.cs) / 60 / config.belt.speed,
-        sprayedMode,
-        sprayedNum,
-        sprayedType: formula.p,
-        sprayedData: config.proliferator,
-        power: factory.power * factoryNum * outenergy
+          )
       };
     },
     hasMaterial(config, parent, name) {
@@ -623,34 +709,41 @@ export default {
 
       // 统计工厂
       const factorys = overview.factorys;
-      factorys[data.factoryName] =
-        (factorys[data.factoryName] || 0) + data.factoryNum;
+      increment(factorys, data.factoryName, data.factoryNum);
 
       const materials = overview.materials;
       // 增产剂
       if (data.sprayedNum > 0) {
-        materials[data.sprayedData.name] =
-          (materials[data.sprayedData.name] || 0) - data.sprayedNum;
+        increment(materials, data.sprayedName, -data.sprayedNum);
       }
       // 额外产物
-      for (let name in data.extraProduct) {
-        materials[name] = (materials[name] || 0) + data.extraProduct[name];
-      }
+      incrementMap(materials, data.extraProduct);
       // 额外原料
-      for (let name in data.extraMaterial) {
-        materials[name] = (materials[name] || 0) - data.extraMaterial[name];
+      for (const [key, val] of Object.entries(data.extraMaterial)) {
+        increment(materials, key, -val);
       }
 
       data.formulaMaterial.forEach(item => this.getOverview(item, overview));
+
+      if (data.parent == "root") {
+        this.autoCollecting(overview);
+      }
       return overview;
     },
-    clearCache() {
-      this.factorysetting = { ...factorydefault };
-      localStorage.removeItem(factorydefault.storagesetting);
-      localStorage.removeItem(factorydefault.storageproduct);
-
-      const oldversion = ["sbConfig", "pfConfig", "dsp-formula", "dsp-sprayed"];
-      oldversion.forEach(i => localStorage.removeItem(i));
+    autoCollecting(overview) {
+      let coll = this.productfactorys["采矿设备"];
+      if (coll.name == "无") {
+        return;
+      }
+      coll = this.productfactorys[coll.name];
+      for (const [name, num] of Object.entries(overview.factorys)) {
+        if (/矿脉$/.test(name)) {
+          delete overview.factorys[name];
+          const factoryNum = num / coll.speed / 2;
+          overview.power += factoryNum * coll.power;
+          increment(overview.factorys, coll.name + "矿脉", factoryNum);
+        }
+      }
     }
   }
 };
@@ -680,6 +773,35 @@ img {
 }
 .select-img {
 }
+
+.el-popper.dsp-form-list .el-scrollbar__wrap {
+  max-height: 500px;
+}
+.el-popover.dsp-form-map {
+  background-color: #1c3436;
+}
+.el-popover.popper-title {
+  padding: 0;
+  min-width: 40px;
+  color: #000;
+  padding: 4px;
+  border-radius: 0;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+#app .el-dialog {
+  max-width: 800px;
+  pre {
+    white-space: pre-wrap;
+  }
+  @media screen and (max-width: 860px) {
+    width: 60%;
+  }
+  @media screen and (max-width: 600px) {
+    width: 90%;
+  }
+}
 </style>
 <style lang="scss" scoped>
 $small-screen: 600px;
@@ -695,16 +817,8 @@ $small-screen: 600px;
     display: flex;
     align-items: center;
   }
-  .select-block {
-    > * {
-      margin-right: 4px;
-    }
-    .dsp-form-list :deep(.el-scrollbar__wrap) {
-      max-height: 500px;
-    }
-    .dsp-form-map :deep(.el-popover) {
-      background-color: #1c3436;
-    }
+  .select-block > * {
+    margin-right: 4px;
   }
   .dsp-form-type {
     padding-left: 15%;
@@ -726,8 +840,12 @@ $small-screen: 600px;
     }
   }
 }
-.dsp-menu > * {
-  margin-left: 10px;
+.dsp-menu {
+  display: flex;
+  flex-wrap: wrap;
+  > * {
+    margin: 0 0 4px 10px;
+  }
 }
 .dsp-procucts {
   display: flex;
