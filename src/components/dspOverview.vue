@@ -5,18 +5,20 @@
     class="dsp-overview"
   >
     <div class="text">
-      总耗电大约：{{ overview.power | numFmt }} M
-      <span
-        v-if="overview.products['临界光子-射线接收站']"
-        title="实际接受戴森球发电量受到能量散失影响"
-      >
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 戴森球大约：{{
-          ((overview.products["临界光子-射线接收站"].num * 2000) /
-            (100 - dissipation))
-            | numFmt
-        }}
-        M
-      </span>
+      <div>
+        总耗电大约：{{ overview.power | numFmt }} M
+        <span
+          v-if="overview.products['临界光子-射线接收站']"
+          title="实际接受戴森球发电量受到能量散失影响"
+        >
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 戴森球大约：{{
+            ((overview.products["临界光子-射线接收站"].num * 2000) /
+              (100 - dissipation))
+              | numFmt
+          }}
+          M
+        </span>
+      </div>
       <div v-for="name in ['冰巨采集器', '气巨采集器']" :key="'warn' + name">
         <span v-if="overview.factorys[name] > 40">
           {{ name }} x
@@ -27,27 +29,33 @@
     </div>
     <div class="all">
       <div>
-        <dl v-for="(item, key) in overview.products" :key="key">
-          <img :src="imgs[item.name]" alt="" />
-          <span v-if="item.title" style="color: #f50a0a;">
-            <el-popover
-              placement="bottom-start"
-              trigger="hover"
-              popper-class="popper-title"
-              :content="item.title"
+        <template v-for="(item, key) in overview.products">
+          <dl v-if="item.root || showall" :key="key">
+            <img :src="imgs[item.name]" alt="" />
+            <span v-if="item.title" style="color: #f50a0a;">
+              <el-popover
+                placement="bottom-start"
+                trigger="hover"
+                popper-class="popper-title"
+                :content="item.title"
+              >
+                <span slot="reference">
+                  {{ item.name }} x {{ item.num | numFmt }}
+                  <template v-if="item.use">({{ item.use | numFmt }})</template>
+                </span>
+              </el-popover>
+            </span>
+            <span
+              v-else
+              style="color: #f50a0a;"
+              @touchstart="touch = item.name"
             >
-              <span slot="reference">
-                {{ item.name }} x {{ item.num | numFmt }}
-                <template v-if="item.use">({{ item.use | numFmt }})</template>
-              </span>
-            </el-popover>
-          </span>
-          <span v-else style="color: #f50a0a;" @touchstart="touch = item.name">
-            {{ item.name }} x {{ item.num | numFmt }}
-          </span>
-          <img :src="imgs[item.factoryName.replace('矿脉', '')]" alt="" />
-          {{ item.factoryFullname }} x {{ item.factoryNum | numFmt }}
-        </dl>
+              {{ item.name }} x {{ item.num | numFmt }}
+            </span>
+            <img :src="imgs[item.factoryName.replace('矿脉', '')]" alt="" />
+            {{ item.factoryFullname }} x {{ item.factoryNum | numFmt }}
+          </dl>
+        </template>
       </div>
       <div>
         <dl v-for="item in sortFactorys" :key="'f' + item.key">
@@ -59,7 +67,7 @@
           >
             <span slot="reference">
               <img :src="imgs[item.name]" alt="" />
-              {{ item.key }} x {{ item.num | numFmt }} {{ item.index }}
+              {{ item.key }} x {{ item.num | numFmt }}
             </span>
           </el-popover>
         </dl>
@@ -83,6 +91,12 @@
       </div>
     </div>
     <span slot="footer">
+      <el-button v-if="overall" @click="showall = !showall">
+        {{ showall ? "隐藏中间产物" : "显示中间产物" }}
+      </el-button>
+      <el-button v-if="overall" @click="showfactory = !showfactory">
+        {{ showfactory ? "隐藏工厂" : "显示工厂" }}
+      </el-button>
       <el-button @click="_visible = false">关闭</el-button>
     </span>
   </el-dialog>
@@ -91,6 +105,7 @@
 export default {
   props: {
     overview: Object,
+    overall: Boolean,
     factory: Array,
     title: String,
     dissipation: Number,
@@ -100,8 +115,17 @@ export default {
       default: false
     }
   },
+  data() {
+    return {
+      showall: true,
+      showfactory: true
+    };
+  },
   computed: {
     sortFactorys() {
+      if (!this.showfactory) {
+        return [];
+      }
       const vals = [];
       for (let key in this.overview.factorys) {
         const name = key.replace("矿脉", "");
@@ -153,7 +177,14 @@ export default {
 <style lang="scss" scoped>
 .dsp-overview {
   .text {
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
     white-space: normal;
+    .text-first {
+      display: flex;
+      flex-wrap: wrap;
+    }
   }
   .all {
     display: flex;
@@ -166,6 +197,15 @@ export default {
   @media screen and (max-width: 860px) {
     .all {
       flex-direction: column;
+    }
+  }
+  :deep(.el-dialog) {
+    max-width: 800px;
+    @media screen and (max-width: 860px) {
+      width: 60%;
+    }
+    @media screen and (max-width: 600px) {
+      width: 90%;
     }
   }
 }

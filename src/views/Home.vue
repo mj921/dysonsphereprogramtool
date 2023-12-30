@@ -198,6 +198,7 @@
       :factory="itemfactorys"
       :title="productname"
       :dissipation="productsetting['能量散失']"
+      :overall="false"
       :imgs="imgs"
     />
     <dsp-overview
@@ -206,6 +207,7 @@
       :factory="itemfactorys"
       :title="programname"
       :dissipation="productsetting['能量散失']"
+      :overall="true"
       :imgs="imgs"
     />
   </div>
@@ -349,6 +351,7 @@ export default {
       }
 
       // 抵消终极产物和额外原料
+      const tofixed = n => Number(n.toFixed(3));
       for (const [name, item] of Object.entries(this.productdata)) {
         if (item.data === undefined) {
           continue;
@@ -357,21 +360,26 @@ export default {
         const val = item.data.productNum;
         const num = data.materials[name];
 
-        // TODO .toFixed(3)
         if (num < 0) {
           const use = num + val > 0 ? -num : val;
-          data.products[key].title = `累计生产:${
+          data.products[key].title = `累计生产:${tofixed(
             data.products[key].num
-          } 终极产物:${val} 中间产物:${data.products[key].num -
-            val} 额外消耗终极产物:${use}`;
+          )} 终极产物:${tofixed(val)} 中间产物:${tofixed(
+            data.products[key].num - val
+          )} 额外消耗终极产物:${tofixed(use)}`;
           data.products[key].num -= use;
           data.products[key].use = use;
           data.materials[name] += use;
         } else {
-          data.products[key].title = `累计生产:${
+          data.products[key].title = `累计生产:${tofixed(
             data.products[key].num
-          } 终极产物:${val} 中间产物:${data.products[key].num - val}`;
+          )} 终极产物:${tofixed(val)} 中间产物:${tofixed(
+            data.products[key].num - val
+          )}`;
         }
+
+        // 标签终极产物
+        data.products[key].root = true;
       }
       return data;
     }
@@ -476,7 +484,14 @@ export default {
         };
       });
       this.programSave(true);
-      this.visibleprogram = false;
+
+      // 重命名当前方案名称
+      const old = data.find(i => i.source == this.programname);
+      if (old === undefined) {
+        this.programname = "";
+      } else if (old.source != old.name) {
+        this.programname = old.name;
+      }
     },
     programData() {
       return this.programdata.map(i => {
@@ -788,19 +803,6 @@ img {
   border-radius: 0;
   font-family: Arial, sans-serif;
   font-size: 12px;
-}
-
-#app .el-dialog {
-  max-width: 800px;
-  pre {
-    white-space: pre-wrap;
-  }
-  @media screen and (max-width: 860px) {
-    width: 60%;
-  }
-  @media screen and (max-width: 600px) {
-    width: 90%;
-  }
 }
 </style>
 <style lang="scss" scoped>

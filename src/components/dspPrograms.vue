@@ -1,8 +1,9 @@
 <template>
   <el-dialog
     title="戴森球方案配置"
-    :visible.sync="_visible"
     class="dsp-programs"
+    :visible.sync="_visible"
+    :close-on-click-modal="false"
   >
     <pre v-if="list.length == 0">
       当创建你的戴森球方案后，请先设定配置参数，然后进行产物量化计算。
@@ -162,7 +163,14 @@ export default {
     listSave() {
       const index = this.editIndex;
       this.editIndex = -1;
-      // TODO 重复
+      // 重置重复值
+      const repeat = this.list.find(
+        (v, i) => i != index && v.name == this.list[index].name
+      );
+      if (repeat !== undefined) {
+        this.list[index].name = this.list[index].source;
+      }
+      // 移除空值
       if (this.list[index].name == "" && this.list[index].source == "") {
         this.list.splice(index, 1);
       }
@@ -172,12 +180,13 @@ export default {
     },
     listAdd() {
       this.dragOrder++;
-      this.list.push({ order: this.dragIndex, name: "", source: "" });
+      this.list.push({ order: this.dragOrder, name: "", source: "" });
       this.listEdit(this.list.length - 1);
     },
     // 方案操作
     save() {
       this.programUpdate(this.list);
+      this._visible = false;
     }
   }
 };
@@ -185,7 +194,16 @@ export default {
 <style lang="scss" scoped>
 .dsp-programs {
   :deep(.el-dialog) {
-    width: 768px;
+    max-width: 768px;
+    @media screen and (max-width: 860px) {
+      width: 60%;
+    }
+    @media screen and (max-width: 600px) {
+      width: 90%;
+    }
+  }
+  pre {
+    white-space: pre-wrap;
   }
   .programs-list {
     list-style: none;

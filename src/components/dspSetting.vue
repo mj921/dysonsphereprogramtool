@@ -71,7 +71,7 @@
       </el-form-item>
     </el-form>
     <span slot="footer">
-      <el-button @click="reset" title="重置当前方案的配置TODO">
+      <el-button @click="reset" title="重置当前方案的配置">
         重置
       </el-button>
       <el-button @click="save" title="保存配置并更新当前产物数据">
@@ -179,8 +179,8 @@ export default {
         ? `${factorydefault.setting}-${this.name}`
         : factorydefault.setting;
       localStorage.setItem(key, JSON.stringify(this.setting));
-      this._visible = false;
       this.settingUpdate(this.name, this.setting);
+      this._visible = false;
     },
     reset() {
       this.setting = { ...factorydefault };
@@ -202,8 +202,12 @@ $small-screen: 600px;
     flex-wrap: wrap;
   }
   :deep(.el-dialog) {
-    width: 768px;
+    max-width: 768px;
+    @media screen and (max-width: 860px) {
+      width: 60%;
+    }
     @media screen and (max-width: $small-screen) {
+      width: 90%;
       .el-form-item__content {
         width: calc(100% - 120px);
       }

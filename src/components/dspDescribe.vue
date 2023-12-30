@@ -143,12 +143,10 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-#app .dsp-describe :deep(.el-dialog) {
-  max-width: 960px;
-}
 .dsp-describe {
   pre {
     width: 100%;
+    white-space: pre-wrap;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
       sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-size: 16px;
@@ -166,6 +164,15 @@ export default {
     flex-wrap: wrap;
     button {
       margin: 0 0 4px 10px;
+    }
+  }
+  :deep(.el-dialog) {
+    max-width: 960px;
+    @media screen and (max-width: 860px) {
+      width: 60%;
+    }
+    @media screen and (max-width: 600px) {
+      width: 90%;
     }
   }
 }
