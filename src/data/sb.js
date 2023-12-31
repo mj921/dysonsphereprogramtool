@@ -1,7 +1,4 @@
 export const factorydefault = {
-  storageprogram: "dsp-program",
-  storagesetting: "dsp-setting",
-  storageproduct: "dsp-product",
   program: "dsp-program",
   setting: "dsp-setting",
   product: "dsp-product",

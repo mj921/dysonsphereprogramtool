@@ -386,6 +386,7 @@ export default {
   color: #dcdcdc;
   .tree-pf {
     display: flex;
+    flex-wrap: wrap;
     &.curr {
       background-color: rgba($color: #ffffff, $alpha: 0.3);
       .drak {

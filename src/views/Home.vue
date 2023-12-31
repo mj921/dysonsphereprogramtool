@@ -148,6 +148,7 @@
           :value="item.name"
           :label="item.name"
         >
+          <img v-if="imgs[item.describe]" :src="imgs[item.describe]" class="img-24" alt="" />
           {{ item.name }}
         </el-option>
       </el-select>
@@ -357,25 +358,33 @@ export default {
           continue;
         }
         const key = `${item.data.productName}-${item.data.factoryName}`;
+        const total = data.products[key].num;
         const val = item.data.productNum;
         const num = data.materials[name];
 
         if (num < 0) {
           const use = num + val > 0 ? -num : val;
           data.products[key].title = `累计生产:${tofixed(
-            data.products[key].num
+            total
           )} 终极产物:${tofixed(val)} 中间产物:${tofixed(
-            data.products[key].num - val
+            total - val
           )} 额外消耗终极产物:${tofixed(use)}`;
-          data.products[key].num -= use;
-          data.products[key].use = use;
+          data.products[key].use = total - val + use;
+          data.products[key].num = val - use;
           data.materials[name] += use;
+          if (data.materials[name] == 0) {
+            delete data.materials[name];
+          }
+        } else if (val != data.products[key].num) {
+          data.products[key].title = `累计生产:${tofixed(
+            total
+          )} 终极产物:${tofixed(val)} 中间产物:${tofixed(total - val)}`;
+          data.products[key].use = total - val;
+          data.products[key].num = val;
         } else {
           data.products[key].title = `累计生产:${tofixed(
-            data.products[key].num
-          )} 终极产物:${tofixed(val)} 中间产物:${tofixed(
-            data.products[key].num - val
-          )}`;
+            total
+          )} 终极产物:${tofixed(val)}`;
         }
 
         // 标签终极产物
@@ -437,7 +446,6 @@ export default {
         this.programname
       );
       this.productfactorys = getFactorys(this.productsetting);
-      this.productlist = Object.keys(program.data);
       this.productdata = program.data;
       // 对切换方案后未加载的数据执行加载
       Object.values(program.data).forEach(product => {
@@ -449,7 +457,17 @@ export default {
           this.productUpdate();
         }
       });
-      this.productname = this.productlist.length > 0 ? this.productlist[0] : "";
+      this.productlist = Object.keys(this.productdata);
+
+      // 设置切换方案后产物和配置
+      for (const product of Object.values(this.productdata)) {
+        this.configtype = product.configtype;
+        this.confignum = product.confignum;
+        this.configmaterial = product.configmaterial;
+        this.productname = product.name;
+        program.describe = product.name;
+        return;
+      }
     },
     programUpdate(data) {
       // 清理被移除方案的配置
@@ -459,14 +477,28 @@ export default {
           localStorage.removeItem(`${factorydefault.product}-${item.name}`);
         }
       });
+
       // 根据name映射创建新的方案组
       this.programdata = data.map(item => {
+        let data = {};
         const last = this.programdata.find(p => p.name == item.source);
-        if (last === undefined) {
-          return { name: item.name, data: {} };
+        if (last) {
+          data = last.data;
+        }
+        // 导入数据
+        if (item.import !== undefined) {
+          data = item.import.program;
+          localStorage.setItem(
+            `${factorydefault.setting}-${item.name}`,
+            JSON.stringify(item.import.setting)
+          );
+          localStorage.setItem(
+            `${factorydefault.product}-${item.name}`,
+            JSON.stringify(item.import.product)
+          );
         }
         // 配置重命名
-        if (item.name != item.source) {
+        if (item.source != "" && item.source != item.name) {
           localStorage.setItem(
             `${factorydefault.setting}-${item.name}`,
             localStorage.getItem(`${factorydefault.setting}-${item.source}`)
@@ -478,10 +510,7 @@ export default {
           );
           localStorage.removeItem(`${factorydefault.product}-${item.source}`);
         }
-        return {
-          name: item.name,
-          data: last.data
-        };
+        return { name: item.name,describe:item.describe, data };
       });
       this.programSave(true);
 
@@ -491,12 +520,15 @@ export default {
         this.programname = "";
       } else if (old.source != old.name) {
         this.programname = old.name;
+      } else if (old.import) {
+        this.programActive(this.programname);
       }
     },
     programData() {
       return this.programdata.map(i => {
         return {
           name: i.name,
+          describe: i.describe,
           data: Object.values(i.data).reduce((data, item) => {
             data[item.name] = {
               name: item.name,
@@ -667,7 +699,7 @@ export default {
         factoryFullname: factory.fullname || factory.name,
         factoryNum,
         beltName: config.belt.name,
-        beltNum: ((num / formula.c) * formula.cs) / 60 / config.belt.speed,
+        beltNum: num / 60 / config.belt.speed,
         sprayedName: config.sprayed.name,
         sprayedNum,
         sprayedMode,
@@ -786,6 +818,10 @@ img {
   vertical-align: top;
   margin-right: 4px;
 }
+.img-24 {
+  width: 24px;
+  height: 24px;
+}
 .select-img {
 }
 
@@ -796,13 +832,16 @@ img {
   background-color: #1c3436;
 }
 .el-popover.popper-title {
-  padding: 0;
+  max-width: 80%;
+  padding: 4px;
   min-width: 40px;
   color: #000;
-  padding: 4px;
   border-radius: 0;
   font-family: Arial, sans-serif;
   font-size: 12px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 </style>
 <style lang="scss" scoped>
