@@ -8,7 +8,6 @@
  * n ： 显示配方数量(如果不提供就是1)
  * rn： 实际使用数量(如果不提供就是n)
  * c ： 目标产物数量(自动计算 s[0].rn)
- * cs： 产物数量(自动计算 sum(s.n) 影响传送带统计)
  * cq： 原料数量(自动计算 sum(q.n) 影响增产剂消耗)
  */
 export const formulaInit = factorys => {
@@ -20,7 +19,6 @@ export const formulaInit = factorys => {
     for (let item of formulaAll[key]) {
       item.s.forEach(fn);
       item.q.forEach(fn);
-      item.cs = item.s.reduce((a, b) => a + (b.n || 1), 0);
       item.cq = item.q.reduce((a, b) => a + (b.n || 1), 0);
       item.c = item.s[0].rn;
       if (item.q.length == 0) {
@@ -236,6 +234,18 @@ export const formulaAll = {
       m: "原油精炼厂",
       q: [{ name: "原油", n: 2 }],
       t: 4
+    },
+    {
+      s: [{ name: "精炼油", n: 3, rn: 1 }],
+      group: "组件",
+      m: "原油精炼厂",
+      q: [
+        { name: "精炼油", n: 2, rn: 0 },
+        { name: "氢", n: 1 },
+        { name: "煤矿", n: 1 }
+      ],
+      t: 4,
+      p: 1
     }
   ],
   石墨烯: [
@@ -1894,9 +1904,9 @@ export const formulaAll = {
       p: 1
     }
   ],
-  微型微型粒子对撞机: [
+  微型粒子对撞机: [
     {
-      s: [{ name: "微型微型粒子对撞机" }],
+      s: [{ name: "微型粒子对撞机" }],
       group: "建筑",
       m: "制作台",
       q: [
