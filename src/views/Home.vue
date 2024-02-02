@@ -77,7 +77,7 @@
             :key="item"
           >
             <div class="panel-wrapper">
-              <dl v-for="i in 7" :key="`${item}-row-${i}`">
+              <dl v-for="i in 8" :key="`${item}-row-${i}`">
                 <dd
                   :class="{
                     curr:
@@ -148,7 +148,12 @@
           :value="item.name"
           :label="item.name"
         >
-          <img v-if="imgs[item.describe]" :src="imgs[item.describe]" class="img-24" alt="" />
+          <img
+            v-if="imgs[item.describe]"
+            :src="imgs[item.describe]"
+            class="img-24"
+            alt=""
+          />
           {{ item.name }}
         </el-option>
       </el-select>
@@ -510,7 +515,7 @@ export default {
           );
           localStorage.removeItem(`${factorydefault.product}-${item.source}`);
         }
-        return { name: item.name,describe:item.describe, data };
+        return { name: item.name, describe: item.describe, data };
       });
       this.programSave(true);
 
@@ -581,6 +586,12 @@ export default {
     productUpdate() {
       const name = this.productname;
       if (!name || !formulaAll[name]) return;
+      const old = this.programdata[name];
+      if (old) {
+        this.confignum = old.confignum;
+        this.configtype = old.configtype;
+        this.configmaterial = old.configmaterial;
+      }
       const config = {
         setting: loadConfig(factorydefault.product, {}, this.programname),
         belt: this.productfactorys["传送带"],

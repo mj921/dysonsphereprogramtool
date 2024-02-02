@@ -62,6 +62,7 @@
             class="tree-pf"
             :class="{ curr: data.formulaIndex === i }"
             @click.stop="changeFormula(data, i)"
+            :title="item.title"
           >
             <template v-if="item.q.length > 0">
               <div v-for="(jtem, j) in item.q" :key="'q' + j">

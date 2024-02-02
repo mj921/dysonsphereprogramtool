@@ -97,6 +97,7 @@ export const formulaAll = {
     {
       s: [{ name: "可燃冰" }, { name: "氢", n: 0 }],
       group: "组件",
+      title: "冰巨星+轨道采集器",
       m: "冰巨采集器",
       mp: "冰巨采集器_可燃冰",
       q: [],
@@ -144,6 +145,7 @@ export const formulaAll = {
     {
       s: [{ name: "临界光子", n: 3 }],
       group: "组件",
+      title: "射线接收站+引力透镜",
       m: "射线接收站",
       q: [{ name: "引力透镜", n: 0.025 }],
       t: 15,
@@ -215,6 +217,7 @@ export const formulaAll = {
     {
       s: [{ name: "高级石墨" }, { name: "氢", n: 3, rn: 1 }],
       group: "组件",
+      title: "X射线裂解",
       m: "原油精炼厂",
       q: [
         { name: "氢", n: 2, rn: 0 },
@@ -231,6 +234,7 @@ export const formulaAll = {
         { name: "氢", n: 1 }
       ],
       group: "组件",
+      title: "等离子精炼",
       m: "原油精炼厂",
       q: [{ name: "原油", n: 2 }],
       t: 4
@@ -238,6 +242,7 @@ export const formulaAll = {
     {
       s: [{ name: "精炼油", n: 3, rn: 1 }],
       group: "组件",
+      title: "重整精炼",
       m: "原油精炼厂",
       q: [
         { name: "精炼油", n: 2, rn: 0 },
@@ -245,6 +250,18 @@ export const formulaAll = {
         { name: "煤矿", n: 1 }
       ],
       t: 4,
+      p: 1
+    },
+    {
+      s: [{ name: "精炼油", n: 3 }],
+      group: "组件",
+      title: "等离子精炼+重整精炼",
+      m: "原油精炼厂",
+      q: [
+        { name: "原油", n: 2 },
+        { name: "煤矿", n: 1 }
+      ],
+      t: 8,
       p: 1
     }
   ],
@@ -704,6 +721,7 @@ export const formulaAll = {
     {
       s: [{ name: "氢" }, { name: "重氢", n: 0 }],
       group: "组件",
+      title: "气态巨星+轨道采集器",
       m: "气巨采集器",
       mp: "气巨采集器_氢",
       q: [],
@@ -713,6 +731,7 @@ export const formulaAll = {
     {
       s: [{ name: "氢" }, { name: "可燃冰", n: 0 }],
       group: "组件",
+      title: "冰巨星+轨道采集器",
       m: "冰巨采集器",
       mp: "冰巨采集器_氢",
       q: [],
@@ -722,6 +741,7 @@ export const formulaAll = {
     {
       s: [{ name: "氢" }, { name: "精炼油", n: 2 }],
       group: "组件",
+      title: "等离子精炼",
       m: "原油精炼厂",
       q: [{ name: "原油", n: 2 }],
       t: 4
@@ -732,6 +752,7 @@ export const formulaAll = {
         { name: "高级石墨", n: 1 }
       ],
       group: "组件",
+      title: "X射线裂解",
       m: "原油精炼厂",
       q: [
         { name: "氢", n: 2, rn: 0 },
@@ -754,6 +775,7 @@ export const formulaAll = {
         { name: "反物质", n: 2 }
       ],
       group: "组件",
+      title: "质能存储",
       m: "微型粒子对撞机",
       q: [{ name: "临界光子", n: 2 }],
       t: 2,
@@ -958,6 +980,7 @@ export const formulaAll = {
     {
       s: [{ name: "重氢" }, { name: "氢", n: 0 }],
       group: "组件",
+      title: "体态巨星+轨道采集器",
       m: "气巨采集器",
       mp: "气巨采集器_重氢",
       q: [],
@@ -978,6 +1001,7 @@ export const formulaAll = {
         { name: "氢", n: 0.99, rn: 0.0 }
       ],
       group: "组件",
+      title: "重氢分馏",
       m: "分馏塔",
       q: [{ name: "氢", n: 1, rn: 0.01 }],
       t: 1,
@@ -1164,6 +1188,32 @@ export const formulaAll = {
       p: 1
     }
   ],
+  干扰胶囊: [
+    {
+      s: [{ name: "干扰胶囊" }],
+      group: "消耗品",
+      m: "制作台",
+      q: [
+        { name: "电磁涡轮", n: 1 },
+        { name: "电浆激发器", n: 1 },
+        { name: "氢", n: 3 }
+      ],
+      t: 2
+    }
+  ],
+  压制胶囊: [
+    {
+      s: [{ name: "压制胶囊" }],
+      group: "消耗品",
+      m: "制作台",
+      q: [
+        { name: "干扰胶囊", n: 1 },
+        { name: "超级磁场环", n: 2 },
+        { name: "钛化玻璃", n: 1 }
+      ],
+      t: 8
+    }
+  ],
   位面过滤器: [
     {
       s: [{ name: "位面过滤器" }],
@@ -1183,6 +1233,7 @@ export const formulaAll = {
         { name: "氢", n: 2 }
       ],
       group: "组件",
+      title: "质能存储",
       m: "微型粒子对撞机",
       q: [{ name: "临界光子", n: 2 }],
       t: 2
@@ -1790,6 +1841,20 @@ export const formulaAll = {
       p: 1
     }
   ],
+  集装分拣器: [
+    {
+      s: [{ name: "集装分拣器", n: 2 }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "极速分拣器", n: 2 },
+        { name: "超级磁场环", n: 1 },
+        { name: "处理器", n: 1 }
+      ],
+      t: 1,
+      p: 1
+    }
+  ],
   采矿机: [
     {
       s: [{ name: "采矿机" }],
@@ -2149,6 +2214,20 @@ export const formulaAll = {
       t: 10
     }
   ],
+  近程电浆塔: [
+    {
+      s: [{ name: "近程电浆塔" }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "钢材", n: 15 },
+        { name: "超级磁场环", n: 5 },
+        { name: "电浆激发器", n: 5 },
+        { name: "处理器", n: 5 }
+      ],
+      t: 8
+    }
+  ],
   战场分析基站: [
     {
       s: [{ name: "战场分析基站" }],
@@ -2161,6 +2240,20 @@ export const formulaAll = {
         { name: "动力引擎", n: 12 }
       ],
       t: 6
+    }
+  ],
+  干扰塔: [
+    {
+      s: [{ name: "干扰塔" }],
+      group: "建筑",
+      m: "制作台",
+      q: [
+        { name: "铜块", n: 12 },
+        { name: "电浆激发器", n: 9 },
+        { name: "金刚石", n: 6 },
+        { name: "处理器", n: 3 }
+      ],
+      t: 5
     }
   ],
   信号塔: [
