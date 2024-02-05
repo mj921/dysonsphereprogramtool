@@ -314,10 +314,17 @@ export default {
       this.programActive(val);
     },
     productname(val) {
-      if (val && !(this.productdata[val] && this.productdata[val].data)) {
-        const save = this.productlist.indexOf(val) === -1;
+      const product = this.productdata[val];
+      if (product) {
+        this.confignum = product.confignum;
+        this.configtype = product.configtype;
+        this.configmaterial = product.configmaterial;
+      }
+
+      if (val && !(product && product.data)) {
         this.productUpdate();
-        if (save) {
+        if (this.productlist.indexOf(val) === -1) {
+          this.productlist = Object.keys(this.productdata);
           this.programSave();
         }
       }
@@ -571,7 +578,7 @@ export default {
     },
     productRemove(name) {
       this.productlist.splice(this.productlist.indexOf(name), 1);
-      delete this.productdata[name];
+      this.$delete(this.productdata, name);
       if (this.productname === name) {
         const names = this.productlist;
         this.productname = names.length > 0 ? names[names.length - 1] : "";
@@ -612,7 +619,7 @@ export default {
         configtype: this.configtype,
         configmaterial: this.configmaterial
       });
-      this.productlist = Object.keys(this.productdata);
+      // this.productlist = Object.keys(this.productdata);
       // this.$forceUpdate();
     },
     getProductNum(name, num) {

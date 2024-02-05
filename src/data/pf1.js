@@ -1681,9 +1681,9 @@ export const formulaAll = {
       t: 4
     }
   ],
-  流速检测器: [
+  流速监测器: [
     {
-      s: [{ name: "流速检测器" }],
+      s: [{ name: "流速监测器" }],
       group: "建筑",
       m: "制作台",
       q: [
@@ -1843,7 +1843,7 @@ export const formulaAll = {
   ],
   集装分拣器: [
     {
-      s: [{ name: "集装分拣器", n: 2 }],
+      s: [{ name: "集装分拣器", n: 1 }],
       group: "建筑",
       m: "制作台",
       q: [
