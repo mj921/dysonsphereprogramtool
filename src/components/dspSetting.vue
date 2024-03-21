@@ -191,17 +191,17 @@ export default {
 <style lang="scss" scoped>
 $small-screen: 600px;
 .dsp-setting {
-  :deep(.exxxxl-form-item__content) {
+  @include deepStyle(".exxxxl-form-item__content") {
     width: calc(100% - 120px);
   }
-  :deep(.exxxl-form .el-form-item .el-input) {
+  @include deepStyle(".exxxl-form .el-form-item .el-input") {
     width: auto;
   }
   .dsp-setting-form {
     display: flex;
     flex-wrap: wrap;
   }
-  :deep(.el-dialog) {
+  @include deepStyle(".el-dialog") {
     max-width: 768px;
     @media screen and (max-width: 860px) {
       width: 60%;

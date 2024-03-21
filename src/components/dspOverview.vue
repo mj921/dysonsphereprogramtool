@@ -199,7 +199,7 @@ export default {
       flex-direction: column;
     }
   }
-  :deep(.el-dialog) {
+  @include deepStyle(".el-dialog") {
     max-width: 800px;
     @media screen and (max-width: 860px) {
       width: 60%;
@@ -210,11 +210,11 @@ export default {
   }
 }
 
-:deep(.popper-title) {
+@include deepStyle(".popper-title") {
   padding: 0;
 }
 
-:deep(.el-popover.popper-title) {
+@include deepStyle(".el-popover.popper-title") {
   padding: 0;
 }
 

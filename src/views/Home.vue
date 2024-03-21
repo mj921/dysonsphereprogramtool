@@ -910,10 +910,10 @@ $small-screen: 600px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  :deep(.el-tabs__content) {
+  @include deepStyle(".el-tabs__content") {
     height: 100%;
   }
-  :deep(.el-tab-pane) {
+  @include deepStyle(".el-tab-pane") {
     height: 100%;
     overflow: auto;
   }

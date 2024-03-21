@@ -22,5 +22,12 @@ module.exports = {
         Security_Policy: policy
       })
     ]
+  },
+  css: {
+    loaderOptions: {
+      sass: {
+        prependData: `@import "@/assets/base.scss";`
+      }
+    }
   }
 };

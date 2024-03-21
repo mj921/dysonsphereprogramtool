@@ -327,7 +327,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .dsp-programs {
-  :deep(.el-dialog) {
+  @include deepStyle(".el-dialog") {
     max-width: 768px;
     @media screen and (max-width: 860px) {
       width: 60%;

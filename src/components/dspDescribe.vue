@@ -166,7 +166,7 @@ export default {
       margin: 0 0 4px 10px;
     }
   }
-  :deep(.el-dialog) {
+  @include deepStyle(".el-dialog") {
     max-width: 960px;
     @media screen and (max-width: 860px) {
       width: 60%;
