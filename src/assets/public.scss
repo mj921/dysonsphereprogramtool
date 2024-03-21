@@ -1,4 +1,3 @@
-
 .el-form {
   .el-form-item {
     .el-form-item__label {
@@ -35,12 +34,12 @@
     &.is-focus,
     &:hover {
       .el-input__inner {
-          border-color: #f5c62a;
+        border-color: #f5c62a;
       }
     }
     .el-input__inner:focus {
       border-color: #f5c62a;
-  }
+    }
   }
 }
 .el-radio {
@@ -133,7 +132,7 @@
     color: #f5c62a;
   }
 }
-.el-select-dropdown{
+.el-select-dropdown {
   .el-select-dropdown__item {
     display: flex;
     align-items: center;
