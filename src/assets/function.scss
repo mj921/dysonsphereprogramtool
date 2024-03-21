@@ -1,8 +1,42 @@
-@mixin deepStyle($className) {
-  :deep(#{$className}) {
+@mixin deepStyle($cssSelector) {
+  :deep(#{$cssSelector}) {
     @content;
   }
-  ::v-deep #{$className} {
+  ::v-deep #{$cssSelector} {
     @content;
+  }
+}
+
+// 默认单属性适配 @include ScreenMaxOneDefault(color, red, green));
+@mixin ScreenMaxOneDefault($prop, $value860: null, $value600: null) {
+  @if($value860) {
+    @media screen and (max-width: 860px) {
+      #{$prop}: $value860;
+    }
+  }
+  @if($value600) {
+    @media screen and (max-width: 860px) {
+      #{$prop}: $value600;
+    }
+  }
+}
+
+// 单属性适配 @include screenMaxOne(color, (1920px: red, 1600px: green));
+@mixin screenMaxOne($prop, $valueMaps) {
+  @each $width, $value in $valueMaps {
+    @media screen and (max-width: #{$width}) {
+      #{$prop}: $value;
+    }
+  }
+}
+
+// 多属性适配 @include screenMax((1920px: (color: red, font-size: 16px), 1600px: (color: green, font-size: 12px)));
+@mixin screenMax($widthPropsMaps) {
+  @each $width, $propMaps in $widthPropsMaps {
+    @media screen and (max-width: #{$width}) {
+      @each $prop, $value in $propMaps {
+        #{$prop}: $value;
+      }
+    }
   }
 }
