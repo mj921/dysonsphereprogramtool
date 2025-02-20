@@ -88,6 +88,32 @@ export const factoryparams = {
       power: 2.88
     }
   ],
+  分拣器: [
+    {
+      name: "分拣器",
+      title: "1.5格/s",
+      speed: 1.5,
+      power: 0.018
+    },
+    {
+      name: "高速分拣器",
+      title: "3格/s",
+      speed: 3,
+      power: 0.036
+    },
+    {
+      name: "极速分拣器",
+      title: "6格/s",
+      speed: 6,
+      power: 0.072
+    },
+    {
+      name: "集装分拣器",
+      title: "120格/s",
+      speed: 120,
+      power: 0.144
+    }
+  ],
   制作台: [
     {
       name: "制作台Mk.Ⅰ",

@@ -32,77 +32,16 @@
           </el-option-group>
         </el-select>
         <span>或</span>
-        <el-popover
-          v-model="visibleselect"
-          popper-class="dsp-form-map"
-          trigger="click"
-          content="viewport"
-          :placement="width > 800 ? 'top' : 'left'"
+        <dsp-product-select
+          :visible.sync="visibleselect"
+          :productname="productname"
+          :imgs="imgs"
+          @select="productSelect"
         >
-          <div slot="reference" class="tree-block">
+          <div class="tree-block">
             <el-button type="primary" size="small">选择产物(图片)</el-button>
           </div>
-          <div class="select-tabs">
-            <dl
-              v-for="(val, key) in itemall.map"
-              class="select-tab"
-              :class="{ curr: itemtab === key }"
-              :key="key"
-              @click="itemtab = key"
-            >
-              <img
-                v-if="key == 'items'"
-                src="../assets/component-icon.png"
-                alt=""
-              />
-              <img v-else src="../assets/factory-icon.png" alt="" />
-              <span>{{ val }}</span>
-            </dl>
-            <dl>
-              <div class="select-filter">
-                <el-checkbox
-                  v-for="(name, key) in itemall.list"
-                  :key="key"
-                  v-model="itemactive[key]"
-                  @change="changeFilter"
-                  >{{ name }}</el-checkbox
-                >
-              </div>
-            </dl>
-          </div>
-          <div
-            v-for="(_, item) in itemall.map"
-            v-show="itemtab === item"
-            class="panel"
-            :key="item"
-          >
-            <div class="panel-wrapper">
-              <dl v-for="i in 8" :key="`${item}-row-${i}`">
-                <dd
-                  :class="{
-                    curr:
-                      itemmap[item][`${i}-${j}`] &&
-                      itemmap[item][`${i}-${j}`] === productname
-                  }"
-                  v-for="j in 14"
-                  :key="`${item}-col-${i}-${j}`"
-                  :title="itemmap[item][`${i}-${j}`]"
-                  @click="productSelect(itemmap[item][`${i}-${j}`])"
-                >
-                  <img
-                    v-if="itemmap[item][`${i}-${j}`]"
-                    :class="{
-                      drak:
-                        itemfilter.length > 0 &&
-                        itemfilter.indexOf(itemmap[item][`${i}-${j}`]) == -1
-                    }"
-                    :src="imgs[itemmap[item][`${i}-${j}`]]"
-                  />
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </el-popover>
+        </dsp-product-select>
       </div>
       <div class="dsp-form-type form-block">
         <el-radio-group
@@ -157,6 +96,7 @@
           {{ item.name }}
         </el-option>
       </el-select>
+      <el-button @click="visibleformula = true">查看配方</el-button>
     </div>
     <el-tabs
       :value="productname"
@@ -216,6 +156,7 @@
       :overall="true"
       :imgs="imgs"
     />
+    <dsp-formula :visible.sync="visibleformula" :imgs="imgs" />
   </div>
 </template>
 <script>
@@ -233,6 +174,8 @@ import dspOverview from "../components/dspOverview";
 import dspProducts from "../components/dspProducts";
 import dspPrograms from "../components/dspPrograms";
 import dspSetting from "../components/dspSetting";
+import DspProductSelect from "../components/dspProductSelect.vue";
+import DspFormula from "../components/dspFormula.vue";
 
 function increment(data, key, val) {
   data[key] = (data[key] || 0) + val;
@@ -251,7 +194,9 @@ export default {
     dspOverview,
     dspProducts,
     dspPrograms,
-    dspSetting
+    dspSetting,
+    DspProductSelect,
+    DspFormula
   },
   data() {
     formulaInit(factorydefault);
@@ -259,27 +204,8 @@ export default {
     const setting = loadConfig(factorydefault.setting, {
       ...factorydefault
     });
-
-    const itemlist = [];
-    const itemmap = {};
-    for (let key in productAll.map) {
-      itemmap[key] = {};
-      itemlist.push({
-        name: productAll.map[key],
-        options: productAll[key].map(i => {
-          const arr = i.split("-");
-          const name = arr[arr.length - 1];
-          itemmap[key][arr.slice(0, 2).join("-")] = name;
-          return {
-            value: name,
-            label: name
-          };
-        })
-      });
-    }
-
     return {
-      imgs: imgs,
+      imgs,
       programname: "",
       programdata: JSON.parse(localStorage.getItem("dsp-programs") || "[]"),
       productname: "",
@@ -288,12 +214,7 @@ export default {
       productdatadefault,
       productsetting: setting,
       productfactorys: getFactorys(setting),
-      itemtab: "items",
-      itemmap,
-      itemlist,
       itemall: productAll,
-      itemactive: {},
-      itemfilter: [],
       itemresources: productAll.resources,
       itemfactorys: getFactoryList().concat(productAll.resources),
       configtype: "产量",
@@ -306,7 +227,8 @@ export default {
       visibledescribe: false,
       visibleprogram: false,
       visibleconfig: false,
-      visiblecurrent: false
+      visiblecurrent: false,
+      visibleformula: false
     };
   },
   watch: {
@@ -418,15 +340,6 @@ export default {
     };
   },
   methods: {
-    changeFilter() {
-      const list = [];
-      for (let key in this.itemactive) {
-        if (this.itemactive[key]) {
-          list.push(...this.itemall[key]);
-        }
-      }
-      this.itemfilter = list;
-    },
     changeType() {
       const product = this.productdata[this.productname];
       if (product && product.configtype !== this.configtype) {
@@ -840,8 +753,6 @@ img {
   width: 24px;
   height: 24px;
 }
-.select-img {
-}
 
 .el-popper.dsp-form-list .el-scrollbar__wrap {
   max-height: 500px;
@@ -995,6 +906,32 @@ $small-screen: 600px;
         filter: brightness(50%);
       }
     }
+  }
+}
+</style>
+<style lang="scss">
+.tree-pf {
+  display: flex;
+  flex-wrap: wrap;
+  &.curr {
+    background-color: rgba($color: #ffffff, $alpha: 0.3);
+    .drak {
+      filter: brightness(33%);
+    }
+  }
+  .time {
+    margin: 0 5px;
+    line-height: 16px;
+    font-size: 24px;
+    .time-num {
+      font-size: 12px;
+      line-height: 12px;
+    }
+  }
+  span {
+    vertical-align: bottom;
+    font-size: 12px;
+    line-height: 1em;
   }
 }
 </style>

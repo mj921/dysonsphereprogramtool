@@ -385,30 +385,6 @@ export default {
   box-shadow: 0 0 3px 1px rgba($color: #f5c62a, $alpha: 1);
   border: none;
   color: #dcdcdc;
-  .tree-pf {
-    display: flex;
-    flex-wrap: wrap;
-    &.curr {
-      background-color: rgba($color: #ffffff, $alpha: 0.3);
-      .drak {
-        filter: brightness(33%);
-      }
-    }
-    .time {
-      margin: 0 5px;
-      line-height: 16px;
-      font-size: 24px;
-      .time-num {
-        font-size: 12px;
-        line-height: 12px;
-      }
-    }
-    span {
-      vertical-align: bottom;
-      font-size: 12px;
-      line-height: 1em;
-    }
-  }
   .sprayed-options {
     margin: 0;
     span {
