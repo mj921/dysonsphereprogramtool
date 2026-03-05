@@ -510,7 +510,7 @@ export default {
     productUpdate() {
       const name = this.productname;
       if (!name || !formulaAll[name]) return;
-      const old = this.programdata[name];
+      const old = this.productdata[name];
       if (old) {
         this.confignum = old.confignum;
         this.configtype = old.configtype;
