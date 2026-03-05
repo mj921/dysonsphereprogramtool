@@ -107,6 +107,12 @@ export default {
     }
   },
   methods: {
+    getSorter(sorterList, need) {
+      return (
+        sorterList.find(({ speed }) => speed >= need) ||
+        sorterList[sorterList.length - 1]
+      );
+    },
     onProductSelect(productname) {
       // m 设备 t 时间 q 原料 s 产物
       this.productname = productname;
@@ -124,7 +130,7 @@ export default {
               items.push({
                 name,
                 need,
-                belt: sorterList.find(({ speed }) => speed >= need)
+                belt: this.getSorter(sorterList, need)
               });
             });
             el.s.forEach(({ name, n }) => {
@@ -132,7 +138,7 @@ export default {
               items.push({
                 name,
                 need,
-                belt: sorterList.find(({ speed }) => speed >= need)
+                belt: this.getSorter(sorterList, need)
               });
             });
             beltLevel.push(items);
@@ -154,7 +160,7 @@ export default {
                 items.push({
                   name,
                   need,
-                  belt: sorterList.find(({ speed }) => speed >= need)
+                  belt: this.getSorter(sorterList, need)
                 });
               });
               el.s.forEach(({ name, n }) => {
@@ -162,7 +168,7 @@ export default {
                 items.push({
                   name,
                   need,
-                  belt: sorterList.find(({ speed }) => speed >= need)
+                  belt: this.getSorter(sorterList, need)
                 });
               });
               beltLevel.push(items);

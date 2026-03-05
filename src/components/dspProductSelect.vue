@@ -186,7 +186,7 @@ export default {
     background-color: rgba($color: #000000, $alpha: 0.3);
     padding: 2px;
     @media screen and (max-width: 600px) {
-      flex-direction00: row;
+      flex-direction: row;
     }
     dl {
       margin: 0;

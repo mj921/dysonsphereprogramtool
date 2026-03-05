@@ -168,6 +168,7 @@ import {
   getFactorys,
   getFactoryList
 } from "../data/sb";
+import { parseJsonSafely } from "../utils/json";
 import imgs from "../data/imgs";
 import dspDescribe from "../components/dspDescribe";
 import dspOverview from "../components/dspOverview";
@@ -207,7 +208,10 @@ export default {
     return {
       imgs,
       programname: "",
-      programdata: JSON.parse(localStorage.getItem("dsp-programs") || "[]"),
+      programdata: (() => {
+        const data = parseJsonSafely(localStorage.getItem("dsp-programs"), []);
+        return Array.isArray(data) ? data : [];
+      })(),
       productname: "",
       productlist: [],
       productdata: productdatadefault,

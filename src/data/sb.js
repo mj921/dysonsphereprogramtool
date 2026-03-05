@@ -1,3 +1,5 @@
+import { parseJsonSafely } from "../utils/json";
+
 export const factorydefault = {
   program: "dsp-program",
   setting: "dsp-setting",
@@ -323,10 +325,9 @@ export const loadConfig = (key, val, program) => {
   let config = val;
   const str = localStorage.getItem(key);
   if (str) {
-    try {
-      config = { ...config, ...JSON.parse(str) };
-    } catch (e) {
-      console.log(e);
+    const data = parseJsonSafely(str);
+    if (data && typeof data === "object") {
+      config = { ...config, ...data };
     }
   }
   return config;
