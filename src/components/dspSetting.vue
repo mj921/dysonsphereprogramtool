@@ -152,7 +152,7 @@ export default {
         this.setting[type] = 70;
       } else if (type == "采矿速度" && this.setting[type] < 100) {
         this.setting[type] = 100;
-      } else if (type == "采矿机" || type == "大型采矿机 ") {
+      } else if (type == "采矿机" || type == "大型采矿机") {
         this.setting[type] = Math.ceil(val);
       } else {
         this.setting[type] = val;

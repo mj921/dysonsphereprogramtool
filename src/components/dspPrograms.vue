@@ -83,6 +83,7 @@
 </template>
 <script>
 import { factorydefault, loadConfig } from "../data/sb";
+import { parseJsonSafely } from "../utils/json";
 import imgs from "../data/imgs";
 export default {
   props: {
@@ -296,7 +297,10 @@ export default {
       }
 
       const decodemap = ["", "产量", "设备", "传送带", "speedup", "extra"];
-      const data = JSON.parse(match[2]);
+      const data = parseJsonSafely(match[2]);
+      if (!data || !Array.isArray(data.d) || !Array.isArray(data.p)) {
+        return null;
+      }
       const setting = data.s;
       const program = {};
       const product = {};
